@@ -294,20 +294,20 @@ public class Scanner
                     eat(currentChar);
                     return new OperandToken(":=");
                 }
-                if (oper.equals(">") && currentChar == '=') // if `:=`
+                if (oper.equals(">") && currentChar == '=') // if `>=`
                 {
                     eat(currentChar);
                     return new OperandToken(">=");
                 }
-                if (oper.equals("<") && currentChar == '=') // if `:=`
+                if (oper.equals("<") && currentChar == '=') // if `<=`
                 {
                     eat(currentChar);
                     return new OperandToken("<=");
                 }
-                if (oper.equals("<") && currentChar == '>') // if `:=`
+                if (oper.equals("<") && currentChar == '>') // if `<>`
                 {
                     eat(currentChar);
-                    return new OperandToken("<=");
+                    return new OperandToken("<>");
                 }
                 return new OperandToken(oper);
             }
