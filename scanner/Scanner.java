@@ -7,7 +7,6 @@ import java.io.*;
  *  
  * Usage:
  *  Scanner scanner = new Scanner("x = 1 + 2;")
- *
  */
 public class Scanner
 {
@@ -15,6 +14,7 @@ public class Scanner
     private char currentChar;
     private boolean eof;
     private int line;
+    private int col;
 
     /**
      * Scanner constructor for construction of a scanner that 
@@ -24,9 +24,10 @@ public class Scanner
      *  Scanner lex = new Scanner(inStream);
      * @param inStream the input stream to use
      */
-    public Scanner(InputStream inStream) throws IOException
+    public Scanner(InputStream inStream) throws ScanErrorException
     {
         line = 1;
+        col = 1;
         in = new BufferedReader(new InputStreamReader(inStream));
         getNextChar();
     }
@@ -37,8 +38,10 @@ public class Scanner
      * Usage: Scanner lex = new Scanner(input_string);
      * @param inString the string to scan
      */
-    public Scanner(String inString) throws IOException
+    public Scanner(String inString) throws ScanErrorException
     {
+        line = 1;
+        col = 1;
         in = new BufferedReader(new StringReader(inString));
         eof = false;
         getNextChar();
@@ -52,6 +55,7 @@ public class Scanner
     {
         try 
         {
+            //System.out.println(in.readLine());
             int curr = in.read();
             if (curr == -1)
             {
@@ -71,18 +75,19 @@ public class Scanner
      *                            the value of currentChar after
      *                            getNextChar()
      */
-    
     private void eat(char expected) throws ScanErrorException
     {
         if (currentChar == expected)
         {
             getNextChar();
+            col++;
         }
         else 
         {
             throw new ScanErrorException("Illegal character: expected <" + expected + "> and found <" + currentChar + ">");
         }
     }
+
     /**
      * Checks whether there are characters left in the input stream
      * @return  true if the end of the input stream has not been reached,
@@ -100,7 +105,7 @@ public class Scanner
      */
     public static boolean isDigit(char character) 
     {
-        return "0123456789".indexOf(character) >= 0;
+        return character >= '0' && character <= '9';
     }
     
     /**
@@ -113,31 +118,60 @@ public class Scanner
         return "abcdefghijklmnopqrstuvwxyz".indexOf(Character.toLowerCase(character)) >= 0;
     }
 
+    /**
+     * Checks whether a char represents a seperator
+     * @param character  The character to test
+     * @return           Whether the @param character represents a seperator
+     */
     public static boolean isSeperator(char character)
     {
         return ";{}()".indexOf(character) >= 0;
     }
 
+    /**
+     * Checks whether a char represents an operand
+     * @param character  The character to test
+     * @return           Whether the @param character represents a operand
+     */
     public static boolean isOperand(char character)
     {
         return "=+-*/%:<>".indexOf(character) >= 0;
     }
     
+    /**
+     * Checks whether a char represents a new line
+     * @param character  The character to test
+     * @return           Whether the @param character represents a new line
+     */
     public static boolean isNewLine(char character)
     {
         return character == '\n';
     }
 
+    /**
+     * Checks whether a char represents a white space
+     * @param character  The character to test
+     * @return           Whether the @param character represents a white space
+     */
     public static boolean isWhiteSpace(char character) 
     {
         return " \t\r".indexOf(character) >= 0;
     }
 
-    public static boolean isCommentOpener(char character)
+    /**
+     * Checks whether a char represents a period
+     * @param character  The character to test
+     * @return           Whether the @param character represents a period
+     */
+    public static boolean isPeriod(char character)
     {
-        return character == '/';
+        return character == '.';
     }
 
+    /**
+     * Returns the operand at the current position of the input stream
+     * @return  The seperator as a String
+     */
     public String scanSeperator() throws ScanErrorException
     {
         String operand = String.valueOf(currentChar);
@@ -145,6 +179,10 @@ public class Scanner
         return operand;
     }
 
+    /**
+     * Returns the number at the current position of the input stream
+     * @return  The number as a String
+     */
     public String scanNumber() throws ScanErrorException
     {
         String lexeme = "";
@@ -156,6 +194,10 @@ public class Scanner
         return lexeme;
     }
 
+    /**
+     * Returns the identifier at the current position of the input stream
+     * @return  The identifier as a String
+     */
     public String scanIdentifier() throws ScanErrorException
     {
         String lexeme = "";
@@ -167,6 +209,10 @@ public class Scanner
         return lexeme;
     }
     
+    /**
+     * Returns the operand at the current position of the input stream
+     * @return  The operand as a String
+     */
     public String scanOperand() throws ScanErrorException
     {
         String operand = String.valueOf(currentChar);
@@ -174,6 +220,11 @@ public class Scanner
         return operand;
     }
     
+    /**
+     * Passes over characters in the input stream until a target
+     * character is found
+     * @param target    The target character to find
+     */
     private void skipUntilFound(char target) throws ScanErrorException
     {
         while (hasNext() && currentChar != target)
@@ -182,6 +233,11 @@ public class Scanner
         }
     }
     
+    /**
+     * Skips over characters in input stream until a target String
+     * is found
+     * @param target    The target string to find
+     */
     private void skipUntilFound(String target) throws ScanErrorException
     {
         String skipped = "";
@@ -193,15 +249,19 @@ public class Scanner
     }
 
     /**
-     * Method: nextToken
-     * @return
+     * Gets the next token in the input stream
+     * @throws ScanErrorException
      */
-    public Token nextToken() throws ScanErrorException
+    public Token nextToken() throws ScanErrorException, IOException
     {
         try 
         {
-            if (!hasNext())
+            if (!hasNext() || isPeriod(currentChar))
             {
+                if (isPeriod(currentChar))
+                {
+                    eat(currentChar);
+                }
                 return new KeywordToken(KeywordToken.Keyword.END.name());
             }
             if (isSeperator(currentChar))
@@ -250,6 +310,7 @@ public class Scanner
             if (isNewLine(currentChar))
             {
                 line++;
+                col = 0;
                 eat(currentChar);
                 return nextToken();
             }
@@ -265,7 +326,7 @@ public class Scanner
         } 
         catch (ScanErrorException err)
         {
-            throw new ScanErrorException("Unexpected token: \"" + currentChar + "\"", line);
+            throw new ScanErrorException("Unexpected token: \"" + currentChar + "\"", line, col);
         }
     }    
 }

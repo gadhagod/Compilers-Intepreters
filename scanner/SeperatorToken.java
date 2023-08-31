@@ -1,7 +1,15 @@
 package scanner;
 
+/**
+ * A Token representing a seperator
+ * @author Aarav Borthakur
+ * @version 8/31/23
+ */
 public class SeperatorToken extends Token
 {
+    /**
+     * Types of seperators
+     */
     public static enum Seperator
     {
         OPEN_PAREN,
@@ -14,6 +22,10 @@ public class SeperatorToken extends Token
     private String inpToken;
     private Seperator seperator;
 
+    /**
+     * Constructs a Seperator token with its String representation
+     * @param inpToken  The String representation of the token
+     */
     public SeperatorToken(String inpToken) throws ScanErrorException
     {
         this.inpToken = inpToken;
@@ -43,11 +55,19 @@ public class SeperatorToken extends Token
         }
     }
 
+    /**
+     * Gets the value of the token
+     * @return  the value of the token
+     */
     public Seperator getValue()
     {
         return seperator;
     }
 
+    /**
+     * Gets the provided String representation of the token
+     * @return the String representation of the token
+     */
     public String toString()
     {
         return inpToken;

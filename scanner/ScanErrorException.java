@@ -12,22 +12,29 @@ package scanner;
 public class ScanErrorException extends Exception
 {
     /**
-     * default constructor for ScanErrorObjects
+     * Constructs a ScanErrorException ScanErrorObjects
      */
     public ScanErrorException()
     {
         super();
     }
+    
     /**
      * Constructor for ScanErrorObjects that includes a reason for the error
-     * @param reason
+     * @param reason  The reason for the error
      */
     public ScanErrorException(String reason)
     {
         super(reason);
     }
     
-    public ScanErrorException(String reason, int line)
+    /**
+     * Constructor for ScanErrorObjects that includes a reason for the error
+     * and its line number
+     * @param reason  The reason for the error
+     * @param line    The line number causing the error
+     */
+    public ScanErrorException(String reason, int line, int col)
     {
         super("Line " + line + ": " + reason);
     }

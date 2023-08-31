@@ -1,8 +1,17 @@
 package scanner;
 
+/**
+ * Represents a Token that is an operand
+ * @author  Aarav Borthakur
+ * @version 8/31/23
+ */
 public class OperandToken extends Token
 {
-    public static enum Operand {
+    /**
+     * Types of operands
+     */
+    public static enum Operand 
+    {
         ASSIGNMENT,
         ADDITION,
         SUBTRACTION,
@@ -19,6 +28,11 @@ public class OperandToken extends Token
     private Operand operand;
     private String inpToken;
 
+    /**
+     * Constructs an OperandToken
+     * @param inpToken    The input token
+     * @throws ScanErrorException
+     */
     public OperandToken(String inpToken) throws ScanErrorException
     {
         this.inpToken = inpToken;
@@ -64,16 +78,24 @@ public class OperandToken extends Token
         }
         else
         {
-            // unexpected token
-            throw new ScanErrorException();
+            throw new ScanErrorException(); // unexpected token
         }
     }
 
+    /**
+     * Gets the value of the operand
+     * @param inpToken    The input token
+     * @throws ScanErrorException
+     */
     public Operand getValue()
     {
         return operand;
     }
 
+    /**
+     * Gets the string representation of the token
+     * @return  The String representation of the token
+     */
     public String toString()
     {
         return inpToken;
