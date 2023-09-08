@@ -13,7 +13,7 @@ public class Tester
      */
     public static void main (String[] args) throws Exception
     {
-        Reader input = new FileReader(args.length > 0 ? args[0] : "ScannerTestAdvanced.txt");
+        Reader input = new FileReader(args.length > 0 ? args[0] : "index.html");
         Scannerabb scanner = new Scannerabb(input);
         String currToken = "";
         while (!currToken.equals("END"))

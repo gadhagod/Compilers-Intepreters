@@ -23,6 +23,7 @@ import java.io.*;
 /*  returns the String "END: at end of file */
 %type String
 %eofval{
+    Tag.assertTagsClosed();
     return "END";
 %eofval}
 
@@ -44,8 +45,8 @@ Anything        = [\s\S]*
 /**
  * lexical rules
  */
-{CommentOpener}{Anything}{CommentCloser}	                        {return "Comment";}
-"<"{Identifier}{WhiteSpace}*({Attribute}|({Attribute}{WhiteSpace}*)*)">"	                        {return "Open " + (new Tag(yytext())).getTagName();}
-"</"{WhiteSpace}*{Identifier}{WhiteSpace}*">"	                                                {return "Close " + (new Tag(yytext())).getTagName();}
+{CommentOpener}{Anything}{CommentCloser}	                                {return "Comment";}
+"<"{Identifier}{WhiteSpace}*({Attribute}|({Attribute}{WhiteSpace}*)*)">"	{return "Open " + (new Tag(yytext(), true)).getTagName();}
+"</"{WhiteSpace}*{Identifier}{WhiteSpace}*">"	                            {return "Close " + (new Tag(yytext(), false)).getTagName();}
 {WhiteSpace}		        {}
 .			{ /* do nothing */ }
