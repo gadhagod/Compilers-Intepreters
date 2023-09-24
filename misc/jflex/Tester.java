@@ -3,6 +3,9 @@ import java.io.Reader;
 
 /**
  * Methods to test the scanner
+ * 
+ * @author  Aarav Borthakur
+ * @verison 9/12/23
  */
 public class Tester
 {
@@ -13,7 +16,7 @@ public class Tester
      */
     public static void main (String[] args) throws Exception
     {
-        Reader input = new FileReader(args.length > 0 ? args[0] : "index.html");
+        Reader input = new FileReader(args.length > 0 ? args[0] : "index.xml");
         Scannerabb scanner = new Scannerabb(input);
         String currToken = "";
         while (!currToken.equals("END"))
