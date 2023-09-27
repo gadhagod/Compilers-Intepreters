@@ -22,6 +22,14 @@ public class Parser
         parseStatement();
     }
 
+    private static void assertType(Object value, Class expectedClass) throws TypeMismatch
+    {
+        if (!expectedClass.isInstance(value))
+        {
+            throw new TypeMismatch(expectedClass.getName(), value.getClass().getName());
+        }
+    }
+
     private void eat(Token expectedToken) throws IOException, LanguageException
     {
         if (currToken.equals(expectedToken))
@@ -41,23 +49,49 @@ public class Parser
         return val;
     }
     
-    private int parseExpr() throws IOException, LanguageException
+    private Object parseExpr() throws IOException, LanguageException
     {
-        int val = parseTerm();
-        while (currToken instanceof OperandToken)
+        Object val = parseTerm();
+        if (val instanceof Integer)
         {
-            Operand oper = parseOperand();
-            int second = parseTerm();
-            if (oper.equals(Operand.ADDITION))
+            int intVal = (Integer) (val);
+            while (currToken instanceof OperandToken)
             {
-                val += second;
+                Operand oper = parseOperand();
+                Integer second = (Integer) (parseTerm());
+    
+                if (oper.equals(Operand.ADDITION))
+                {
+                    intVal += second;
+                }
+                else if (oper.equals(Operand.SUBTRACTION))
+                {
+                    intVal -= second;
+                }
             }
-            else if (oper.equals(Operand.SUBTRACTION))
-            {
-                val -= second;
-            }
+            return intVal;
         }
-        return val;
+        else if (val instanceof String)
+        {
+            String strVal = (String) (val);
+            while (currToken instanceof OperandToken)
+            {
+                Operand oper = parseOperand();
+                Object secondTerm = parseTerm();
+                assertType(secondTerm, String.class);
+                
+                if (oper.equals(Operand.ADDITION))
+                {
+                    strVal += (String) secondTerm;
+                }
+                else
+                {
+                    throw new TypeMismatch("string", "string", oper);
+                }
+            }
+            return strVal;
+        }
+        return new TypeMismatch("any", val.getClass().getName());
     }
 
     private String parseIdentifier() throws IOException, LanguageException
@@ -67,14 +101,21 @@ public class Parser
         return token.getValue();
     }
 
-    private int parseFactor() throws IOException, LanguageException
+    private String parseString() throws IOException, LanguageException
+    {
+        StringToken token = (StringToken) (currToken);
+        eat(token);
+        return token.getValue();
+    }
+
+    private Object parseFactor() throws IOException, LanguageException
     {
         if (
             currToken instanceof SeperatorToken && 
             ((SeperatorToken) (currToken)).equals(SeperatorToken.Seperator.OPEN_PAREN))
         {
             eat(new SeperatorToken("("));
-            int val = parseExpr();
+            Object val = parseExpr();
             eat(new SeperatorToken(")"));
             return val;
         }
@@ -84,7 +125,7 @@ public class Parser
         )
         {
             eat(new OperandToken("-"));
-            return -parseFactor();
+            return -(Integer) (parseFactor());
         }
         else if (currToken instanceof DigitToken)
         {
@@ -98,11 +139,17 @@ public class Parser
             {
                 throw new VariableNotDefined(id);
             }
+            /*
             if (!(value instanceof Integer))
             {
                 throw new TypeMismatch(value.getClass().toString(), "integer");
             }
-            return (Integer) (value);
+            */
+            return value;
+        }
+        else if (currToken instanceof StringToken)
+        {
+            return parseString();
         }
         else
         {
@@ -117,29 +164,41 @@ public class Parser
         return curr.getValue();
     }
 
-    private int parseTerm() throws IOException, LanguageException
+    private Object parseTerm() throws IOException, LanguageException
     {
-        int val = parseFactor();
-        while (
-            (currToken instanceof OperandToken) && 
-            (
-                ((OperandToken) (currToken)).equals(Operand.MULTIPLICATION) ||
-                ((OperandToken) (currToken)).equals(Operand.DIVISION)
-            )
-        )
+        Object val = parseFactor();
+        if (val instanceof Integer)
         {
-            Operand oper = parseOperand();
-            int second = parseFactor();
-            if (oper.equals(Operand.MULTIPLICATION))
+            int intVal = (Integer) val;
+            while (
+               (currToken instanceof OperandToken) && 
+                (
+                    ((OperandToken) (currToken)).equals(Operand.MULTIPLICATION) ||
+                    ((OperandToken) (currToken)).equals(Operand.DIVISION)
+                )
+            )
             {
-                val *= second;
+                Operand oper = parseOperand();
+                int second = (Integer) parseFactor();
+                if (oper.equals(Operand.MULTIPLICATION))
+                {
+                    intVal *= second;
+                }
+                else if (oper.equals(Operand.DIVISION))
+                {
+                    intVal /= second;
+                }
             }
-            else if (oper.equals(Operand.DIVISION))
-            {
-                val /= second;
-            }
+            return intVal;
         }
-        return val;
+        else if (val instanceof String)
+        {
+            return val;
+        }
+        else 
+        {
+            return val;
+        }
     }
 
     /*private*/ public void parseStatement() throws IOException, LanguageException

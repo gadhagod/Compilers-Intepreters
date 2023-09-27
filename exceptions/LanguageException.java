@@ -2,12 +2,14 @@ package exceptions;
 
 public abstract class LanguageException extends Exception 
 {
-    LanguageException(String msg)
+    private static int line = 1;
+
+    public static void addLine()
     {
-        super(msg);
+        line++;
     }
-    
-    LanguageException(String msg, int line)
+
+    LanguageException(String msg)
     {
         super("Line " + line + ": " + msg);
     }

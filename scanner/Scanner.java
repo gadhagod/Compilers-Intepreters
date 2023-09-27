@@ -1,6 +1,8 @@
 package scanner;
 import java.io.*;
 
+import exceptions.LanguageException;
+import exceptions.UnexpectedEOF;
 import exceptions.UnexpectedToken;
 
 /**
@@ -15,8 +17,6 @@ public class Scanner
     private BufferedReader in;
     private char currentChar;
     private boolean eof;
-    private int line;
-    private int col;
 
     /**
      * Scanner constructor for construction of a scanner that 
@@ -28,8 +28,6 @@ public class Scanner
      */
     public Scanner(InputStream inStream)
     {
-        line = 1;
-        col = 1;
         in = new BufferedReader(new InputStreamReader(inStream));
         getNextChar();
     }
@@ -42,8 +40,6 @@ public class Scanner
      */
     public Scanner(String inString)
     {
-        line = 1;
-        col = 1;
         in = new BufferedReader(new StringReader(inString));
         eof = false;
         getNextChar();
@@ -81,7 +77,6 @@ public class Scanner
         if (currentChar == expected)
         {
             getNextChar();
-            col++;
         }
         else 
         {
@@ -158,6 +153,11 @@ public class Scanner
     {
         return " \t\r".indexOf(character) >= 0;
     }
+    
+    public static boolean isQuote(char character) 
+    {
+        return character == '\'' || character == '"';
+    }
 
     /**
      * Checks whether a char represents a period
@@ -193,6 +193,24 @@ public class Scanner
             eat(currentChar);
         }
         return lexeme;
+    }
+    
+    public String scanString() throws UnexpectedToken, UnexpectedEOF
+    {
+        char opener = currentChar;
+        eat(currentChar);
+        String result = "";
+        while (opener != currentChar)
+        {
+            if (!hasNext())
+            {
+                throw new UnexpectedEOF();
+            }
+            result += currentChar;
+            eat(currentChar);
+        }
+        eat(currentChar);
+        return result;
     }
 
     /**
@@ -253,7 +271,7 @@ public class Scanner
      * Gets the next token in the input stream
      * @throws ScanErrorException
      */
-    public Token nextToken() throws IOException, UnexpectedToken
+    public Token nextToken() throws IOException, UnexpectedToken, UnexpectedEOF
     {
         if (!hasNext() || isPeriod(currentChar))
         {
@@ -262,6 +280,10 @@ public class Scanner
                 eat(currentChar);
             }
             return new KeywordToken(KeywordToken.Keyword.EOF.name());
+        }
+        if (isQuote(currentChar))
+        {
+            return new StringToken(scanString());
         }
         if (isSeperator(currentChar))
         {
@@ -317,8 +339,7 @@ public class Scanner
         }
         if (isNewLine(currentChar))
         {
-            line++;
-            col = 0;
+            LanguageException.addLine();
             eat(currentChar);
             return nextToken();
         }
