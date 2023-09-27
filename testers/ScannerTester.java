@@ -1,3 +1,4 @@
+package testers;
 import java.io.File;
 import scanner.Scanner;
 
@@ -8,14 +9,14 @@ public class ScannerTester
 {
     /**
      * Tests the Scanner against an input program (if specified
-     * from the command line, else ScannerTestAdvanced.txt)
+     * from the command line, else program.txt)
      * @param args  The command line arguments
      */
     public static void main (String[] args) throws Exception
     {
         String exp = "";
         java.util.Scanner reader = new java.util.Scanner(
-            new File(args.length > 0 ? args[0] : "ScannerTestAdvanced.txt")
+            new File(args.length > 0 ? args[0] : "program.txt")
         );
         while (reader.hasNextLine())
         {

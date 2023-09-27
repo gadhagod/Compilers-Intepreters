@@ -19,7 +19,8 @@ public class KeywordToken extends Token
         END,
         WHILE,
         DO,
-        WRITELN
+        WRITELN,
+        EOF
     }
 
     private String inpToken;
@@ -34,6 +35,19 @@ public class KeywordToken extends Token
     {
         this.inpToken = inpToken;
         this.keyword = Keyword.valueOf(inpToken);
+    }
+
+    public static boolean isKeyword(String identifier)
+    {
+        try 
+        {
+            Keyword.valueOf(identifier);
+        }
+        catch (IllegalArgumentException err)
+        {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -52,5 +66,10 @@ public class KeywordToken extends Token
     public String toString()
     {
         return inpToken;
+    }
+
+    public boolean equals(Keyword other)
+    {
+        return keyword.equals(other);
     }
 }

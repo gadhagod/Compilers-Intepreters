@@ -1,5 +1,7 @@
 package scanner;
 
+import exceptions.UnexpectedToken;
+
 /**
  * Represents a Token that is an operand
  * @author  Aarav Borthakur
@@ -34,7 +36,7 @@ public class OperandToken extends Token
      * @param inpToken    The input token
      * @throws ScanErrorException
      */
-    public OperandToken(String inpToken) throws ScanErrorException
+    public OperandToken(String inpToken) throws UnexpectedToken
     {
         this.inpToken = inpToken;
         if (inpToken.equals(":="))
@@ -83,7 +85,7 @@ public class OperandToken extends Token
         }
         else
         {
-            throw new ScanErrorException(); // unexpected token
+            throw new UnexpectedToken(inpToken); // unexpected token
         }
     }
 
@@ -104,5 +106,10 @@ public class OperandToken extends Token
     public String toString()
     {
         return inpToken;
+    }
+
+    public boolean equals(Operand other)
+    {
+        return operand.equals(other);
     }
 }

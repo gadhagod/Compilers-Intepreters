@@ -1,4 +1,5 @@
 package scanner;
+import exceptions.UnexpectedToken;
 
 /**
  * Represents a Token that is a digit
@@ -15,7 +16,7 @@ public class DigitToken extends Token
      * @param inpToken  The String representation of the Token
      * @throws ScanErrorException
      */
-    public DigitToken(String inpToken) throws ScanErrorException
+    public DigitToken(String inpToken) throws UnexpectedToken
     {
         this.inpToken = inpToken;
         try 
@@ -24,7 +25,7 @@ public class DigitToken extends Token
         }
         catch (NumberFormatException e)
         {
-            throw new ScanErrorException();
+            throw new UnexpectedToken(inpToken);
         }
     }
 
@@ -44,5 +45,10 @@ public class DigitToken extends Token
     public String toString()
     {
         return inpToken;
+    }
+
+    public int equals(int other)
+    {
+        return digit = other;
     }
 }

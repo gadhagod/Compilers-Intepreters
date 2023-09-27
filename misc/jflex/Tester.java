@@ -19,7 +19,7 @@ public class Tester
         Reader input = new FileReader(args.length > 0 ? args[0] : "index.xml");
         Scannerabb scanner = new Scannerabb(input);
         String currToken = "";
-        while (!currToken.equals("END"))
+        while (!currToken.equals("EOF"))
         {
             currToken = scanner.nextToken();
             System.out.println(currToken);

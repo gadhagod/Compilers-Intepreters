@@ -1,6 +1,8 @@
 package scanner;
 import java.io.*;
 
+import exceptions.UnexpectedToken;
+
 /**
  * The Scanner for the compiler/intepreter of the Pascal programming language
  * @author Aarav Borthakur
@@ -24,7 +26,7 @@ public class Scanner
      *  Scanner lex = new Scanner(inStream);
      * @param inStream the input stream to use
      */
-    public Scanner(InputStream inStream) throws ScanErrorException
+    public Scanner(InputStream inStream)
     {
         line = 1;
         col = 1;
@@ -38,7 +40,7 @@ public class Scanner
      * Usage: Scanner lex = new Scanner(input_string);
      * @param inString the string to scan
      */
-    public Scanner(String inString) throws ScanErrorException
+    public Scanner(String inString)
     {
         line = 1;
         col = 1;
@@ -55,7 +57,6 @@ public class Scanner
     {
         try 
         {
-            //System.out.println(in.readLine());
             int curr = in.read();
             if (curr == -1)
             {
@@ -75,7 +76,7 @@ public class Scanner
      *                            the value of currentChar after
      *                            getNextChar()
      */
-    private void eat(char expected) throws ScanErrorException
+    private void eat(char expected) throws UnexpectedToken
     {
         if (currentChar == expected)
         {
@@ -84,7 +85,7 @@ public class Scanner
         }
         else 
         {
-            throw new ScanErrorException("Illegal character: expected <" + expected + "> and found <" + currentChar + ">");
+            throw new UnexpectedToken(currentChar, expected);
         }
     }
 
@@ -172,7 +173,7 @@ public class Scanner
      * Returns the operand at the current position of the input stream
      * @return  The seperator as a String
      */
-    public String scanSeperator() throws ScanErrorException
+    public String scanSeperator() throws UnexpectedToken
     {
         String operand = String.valueOf(currentChar);
         eat(currentChar);
@@ -183,7 +184,7 @@ public class Scanner
      * Returns the number at the current position of the input stream
      * @return  The number as a String
      */
-    public String scanNumber() throws ScanErrorException
+    public String scanNumber() throws UnexpectedToken
     {
         String lexeme = "";
         while (isDigit(currentChar))
@@ -198,7 +199,7 @@ public class Scanner
      * Returns the identifier at the current position of the input stream
      * @return  The identifier as a String
      */
-    public String scanIdentifier() throws ScanErrorException
+    public String scanIdentifier() throws UnexpectedToken
     {
         String lexeme = "";
         while (isDigit(currentChar) || isLetter(currentChar))
@@ -213,7 +214,7 @@ public class Scanner
      * Returns the operand at the current position of the input stream
      * @return  The operand as a String
      */
-    public String scanOperand() throws ScanErrorException
+    public String scanOperand() throws UnexpectedToken
     {
         String operand = String.valueOf(currentChar);
         eat(currentChar);
@@ -225,7 +226,7 @@ public class Scanner
      * character is found
      * @param target    The target character to find
      */
-    private void skipUntilFound(char target) throws ScanErrorException
+    private void skipUntilFound(char target) throws UnexpectedToken
     {
         while (hasNext() && currentChar != target)
         {
@@ -238,7 +239,7 @@ public class Scanner
      * is found
      * @param target    The target string to find
      */
-    private void skipUntilFound(String target) throws ScanErrorException
+    private void skipUntilFound(String target) throws UnexpectedToken
     {
         String skipped = "";
         while (hasNext() && !skipped.endsWith(target))
@@ -252,85 +253,83 @@ public class Scanner
      * Gets the next token in the input stream
      * @throws ScanErrorException
      */
-    public Token nextToken() throws ScanErrorException, IOException
+    public Token nextToken() throws IOException, UnexpectedToken
     {
-        try 
+        if (!hasNext() || isPeriod(currentChar))
         {
-            if (!hasNext() || isPeriod(currentChar))
-            {
-                if (isPeriod(currentChar))
-                {
-                    eat(currentChar);
-                }
-                return new KeywordToken(KeywordToken.Keyword.END.name());
-            }
-            if (isSeperator(currentChar))
-            {
-                return new SeperatorToken(scanSeperator());
-            }
-            if (isDigit(currentChar))
-            {
-                return new DigitToken(scanNumber());
-            }
-            if (isLetter(currentChar))
-            {
-                return new IdentifierToken(scanIdentifier());
-            }
-            if (isOperand(currentChar))
-            {
-                String oper = scanOperand();
-                if (oper.equals("/") && currentChar == '/') // if `//`
-                {
-                    skipUntilFound('\n');
-                    return nextToken();
-                }
-                if (oper.equals("/") && currentChar == '*') // if `/*`
-                {
-                    skipUntilFound("*/");
-                    return nextToken();
-                }
-                if (oper.equals(":") && currentChar == '=') // if `:=`
-                {
-                    eat(currentChar);
-                    return new OperandToken(":=");
-                }
-                if (oper.equals(">") && currentChar == '=') // if `>=`
-                {
-                    eat(currentChar);
-                    return new OperandToken(">=");
-                }
-                if (oper.equals("<") && currentChar == '=') // if `<=`
-                {
-                    eat(currentChar);
-                    return new OperandToken("<=");
-                }
-                if (oper.equals("<") && currentChar == '>') // if `<>`
-                {
-                    eat(currentChar);
-                    return new OperandToken("<>");
-                }
-                return new OperandToken(oper);
-            }
-            if (isNewLine(currentChar))
-            {
-                line++;
-                col = 0;
-                eat(currentChar);
-                return nextToken();
-            }
-            if (isWhiteSpace(currentChar))
+            if (isPeriod(currentChar))
             {
                 eat(currentChar);
+            }
+            return new KeywordToken(KeywordToken.Keyword.EOF.name());
+        }
+        if (isSeperator(currentChar))
+        {
+            return new SeperatorToken(scanSeperator());
+        }
+        if (isDigit(currentChar))
+        {
+            return new DigitToken(scanNumber());
+        }
+        if (isLetter(currentChar))
+        {
+            String identifier = scanIdentifier();
+            if (KeywordToken.isKeyword(identifier))
+            {
+                return new KeywordToken(identifier);
+            }
+            return new IdentifierToken(identifier);
+        }
+        if (isOperand(currentChar))
+        {
+            String oper = scanOperand();
+            if (oper.equals("/") && currentChar == '/') // if `//`
+            {
+                skipUntilFound('\n');
                 return nextToken();
             }
-            else 
+            if (oper.equals("/") && currentChar == '*') // if `/*`
             {
-                throw new ScanErrorException();
+                skipUntilFound("*/");
+                return nextToken();
             }
-        } 
-        catch (ScanErrorException err)
+            if (oper.equals(":") && currentChar == '=') // if `:=`
+            {
+                eat(currentChar);
+                return new OperandToken(":=");
+            }
+            if (oper.equals(">") && currentChar == '=') // if `>=`
+            {
+                eat(currentChar);
+                return new OperandToken(">=");
+            }
+            if (oper.equals("<") && currentChar == '=') // if `<=`
+            {
+                eat(currentChar);
+                return new OperandToken("<=");
+            }
+            if (oper.equals("<") && currentChar == '>') // if `<>`
+            {
+                eat(currentChar);
+                return new OperandToken("<>");
+            }
+            return new OperandToken(oper);
+        }
+        if (isNewLine(currentChar))
         {
-            throw new ScanErrorException("Unexpected token: \"" + currentChar + "\"", line, col);
+            line++;
+            col = 0;
+            eat(currentChar);
+            return nextToken();
+        }
+        if (isWhiteSpace(currentChar))
+        {
+            eat(currentChar);
+            return nextToken();
+        }
+        else 
+        {
+            throw new UnexpectedToken(currentChar);
         }
     }    
 }

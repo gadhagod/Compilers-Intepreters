@@ -10,4 +10,14 @@ public abstract class Token
      * @return value of the Token
      */
     public abstract Object getValue();
+
+    public boolean equals(String other)
+    {
+        return other.equals(toString());
+    }
+
+    public boolean equals(Token other)
+    {
+        return equals(other.toString());
+    }
 }

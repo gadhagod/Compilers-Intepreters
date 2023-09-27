@@ -1,5 +1,7 @@
 package scanner;
 
+import exceptions.UnexpectedToken;
+
 /**
  * A Token representing a seperator
  * @author Aarav Borthakur
@@ -26,7 +28,7 @@ public class SeperatorToken extends Token
      * Constructs a Seperator token with its String representation
      * @param inpToken  The String representation of the token
      */
-    public SeperatorToken(String inpToken) throws ScanErrorException
+    public SeperatorToken(String inpToken) throws UnexpectedToken
     {
         this.inpToken = inpToken;
         if (inpToken.equals("("))
@@ -51,7 +53,7 @@ public class SeperatorToken extends Token
         }
         else
         {
-            throw new ScanErrorException();
+            throw new UnexpectedToken(inpToken);
         }
     }
 
@@ -71,5 +73,10 @@ public class SeperatorToken extends Token
     public String toString()
     {
         return inpToken;
+    }
+
+    public boolean equals(Seperator other)
+    {
+        return seperator.equals(other);
     }
 }
