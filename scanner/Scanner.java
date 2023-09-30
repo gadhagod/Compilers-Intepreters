@@ -287,7 +287,13 @@ public class Scanner
         }
         if (isSeperator(currentChar))
         {
-            return new SeperatorToken(scanSeperator());
+            String seperator = scanSeperator();
+            if (seperator.equals("(") && currentChar == '*') // if `/*`
+            {
+                skipUntilFound("*)");
+                return nextToken();
+            }
+            return new SeperatorToken(seperator);
         }
         if (isDigit(currentChar))
         {
@@ -308,11 +314,6 @@ public class Scanner
             if (oper.equals("/") && currentChar == '/') // if `//`
             {
                 skipUntilFound('\n');
-                return nextToken();
-            }
-            if (oper.equals("/") && currentChar == '*') // if `/*`
-            {
-                skipUntilFound("*/");
                 return nextToken();
             }
             if (oper.equals(":") && currentChar == '=') // if `:=`

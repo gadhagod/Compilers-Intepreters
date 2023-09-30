@@ -28,4 +28,9 @@ public class UnexpectedToken extends LanguageException
     {
         super("Unexpected token: <" + recieved + ">, expected: <" + expected + ">");
     }
+    
+    public UnexpectedToken(Token recieved)
+    {
+        super("Unexpected token: <" + recieved + ">");
+    }
 }

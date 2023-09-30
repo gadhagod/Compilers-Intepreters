@@ -10,6 +10,7 @@ import scanner.OperandToken.Operand;
 
 public class Parser 
 {
+    private java.util.Scanner lineScanner;
     private HashMap<String, Object> vars;
     private Scanner scanner;
     private Token currToken;
@@ -22,12 +23,22 @@ public class Parser
         parseStatement();
     }
 
-    private static void assertType(Object value, Class expectedClass) throws TypeMismatch
+    private String readLine()
+    {   
+        if (lineScanner == null)
+        {
+            lineScanner = new java.util.Scanner(System.in);
+        }
+        return lineScanner.nextLine();
+    }
+
+    private static <T> T expectType(Object value, Class<T> expectedClass) throws TypeMismatch
     {
         if (!expectedClass.isInstance(value))
         {
             throw new TypeMismatch(expectedClass.getName(), value.getClass().getName());
         }
+        return expectedClass.cast(value);
     }
 
     private void eat(Token expectedToken) throws IOException, LanguageException
@@ -49,24 +60,39 @@ public class Parser
         return val;
     }
     
+    /*
+    private Keyword parseKeyword() throws IOException, LanguageException
+    {
+        Keyword val = ((KeywordToken) (currToken)).getValue();
+        eat(currToken);
+        return val;
+    }
+    */
+    
     private Object parseExpr() throws IOException, LanguageException
     {
         Object val = parseTerm();
         if (val instanceof Integer)
         {
-            int intVal = (Integer) (val);
+            Integer intVal = (Integer) (val);
             while (currToken instanceof OperandToken)
             {
                 Operand oper = parseOperand();
-                Integer second = (Integer) (parseTerm());
-    
+                Integer secondTerm = expectType(
+                    parseTerm(), 
+                    Integer.class
+                );
                 if (oper.equals(Operand.ADDITION))
                 {
-                    intVal += second;
+                    intVal += secondTerm;
                 }
                 else if (oper.equals(Operand.SUBTRACTION))
                 {
-                    intVal -= second;
+                    intVal -= secondTerm;
+                }
+                else
+                {
+                    throw new TypeMismatch(intVal, secondTerm, oper);
                 }
             }
             return intVal;
@@ -77,12 +103,14 @@ public class Parser
             while (currToken instanceof OperandToken)
             {
                 Operand oper = parseOperand();
-                Object secondTerm = parseTerm();
-                assertType(secondTerm, String.class);
+                String secondTerm = expectType(
+                    parseTerm(), 
+                    String.class
+                );
                 
                 if (oper.equals(Operand.ADDITION))
                 {
-                    strVal += (String) secondTerm;
+                    strVal += secondTerm;
                 }
                 else
                 {
@@ -139,18 +167,21 @@ public class Parser
             {
                 throw new VariableNotDefined(id);
             }
-            /*
-            if (!(value instanceof Integer))
-            {
-                throw new TypeMismatch(value.getClass().toString(), "integer");
-            }
-            */
             return value;
         }
         else if (currToken instanceof StringToken)
         {
             return parseString();
         }
+        /*
+        else if (
+            currToken instanceof KeywordToken && 
+            ((KeywordToken) currToken).isLogicalOperator()
+        )
+        {
+            return parseKeyword();
+        }
+        */
         else
         {
             throw new UnexpectedToken(currToken.getValue().toString());
@@ -171,22 +202,32 @@ public class Parser
         {
             int intVal = (Integer) val;
             while (
-               (currToken instanceof OperandToken) && 
+               ((currToken instanceof OperandToken) && 
                 (
                     ((OperandToken) (currToken)).equals(Operand.MULTIPLICATION) ||
                     ((OperandToken) (currToken)).equals(Operand.DIVISION)
-                )
+                )) ||
+                ((currToken instanceof KeywordToken) && (((KeywordToken) (currToken)).equals(Keyword.mod)))
             )
             {
-                Operand oper = parseOperand();
-                int second = (Integer) parseFactor();
-                if (oper.equals(Operand.MULTIPLICATION))
+                if (currToken instanceof OperandToken)
                 {
-                    intVal *= second;
+                    Operand oper = parseOperand();
+                    int second = (Integer) parseFactor();
+                    if (oper.equals(Operand.MULTIPLICATION))
+                    {
+                        intVal *= second;
+                    }
+                    else if (oper.equals(Operand.DIVISION))
+                    {
+                        intVal /= second;
+                    }
                 }
-                else if (oper.equals(Operand.DIVISION))
+                else  // currToken is a KeywordToken
                 {
-                    intVal /= second;
+                    eat(new KeywordToken("mod"));
+                    int second = expectType(parseFactor(), Integer.class);
+                    intVal %= second;
                 }
             }
             return intVal;
@@ -207,33 +248,51 @@ public class Parser
         eat(token);
         if (
             token instanceof KeywordToken && 
+            ((KeywordToken) (token)).equals(Keyword.EOF)
+        )
+        {
+            System.exit(1);
+        }
+        else if (
+            token instanceof KeywordToken && 
             ((KeywordToken) (token)).equals(Keyword.WRITELN)
         )
         {
             eat(new SeperatorToken("("));
             System.out.println(parseExpr());
             eat(new SeperatorToken(")"));
-            eat(new SeperatorToken(";"));
+        }
+        else if (token instanceof KeywordToken && ((KeywordToken) (token)).equals(Keyword.READLN))
+        {
+            eat(new SeperatorToken("("));
+            String varName = expectType(parseIdentifier(), String.class);
+            eat(new SeperatorToken(")"));
+            vars.put(varName, readLine());
         }
         else if (
             token instanceof KeywordToken && 
             ((KeywordToken) (token)).equals(Keyword.BEGIN)
         )
         {
-            Token statementOpener = token;
-            while (!(((KeywordToken) (statementOpener)).equals(Keyword.END)))
+            Token statementOpener = currToken;
+            while (!(
+                (statementOpener instanceof KeywordToken) && ((KeywordToken) statementOpener).equals(Keyword.END)
+            ))
             {
                 parseStatement();
-                statementOpener = token;
+                statementOpener = currToken;
             }
             eat(new KeywordToken(Keyword.END.name()));
-            eat(new SeperatorToken(";"));
         }
         else if (token instanceof IdentifierToken)
         {
             eat(new OperandToken(":="));
             vars.put(((IdentifierToken) (token)).getValue(), parseExpr());
-            /* TODO: add string variables here */
         }
+        else
+        {
+            throw new UnexpectedToken(token);
+        }
+        eat(new SeperatorToken(";"));
     }
 }

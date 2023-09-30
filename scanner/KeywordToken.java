@@ -20,7 +20,14 @@ public class KeywordToken extends Token
         WHILE,
         DO,
         WRITELN,
-        EOF
+        READLN,
+        EOF,
+        /*
+        AND,
+        OR,
+        NOT,
+        */
+        mod
     }
 
     private String inpToken;
@@ -49,6 +56,13 @@ public class KeywordToken extends Token
         }
         return true;
     }
+
+    /*
+    public boolean isLogicalOperator()
+    {
+        return keyword.equals(Keyword.AND) || keyword.equals(Keyword.NOT) || keyword.equals(Keyword.OR);
+    }
+    */
 
     /**
      * Gets the keyword the Token represents
