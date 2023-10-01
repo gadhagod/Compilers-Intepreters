@@ -11,6 +11,6 @@ public abstract class LanguageException extends Exception
 
     public LanguageException(String msg)
     {
-        super(msg);
+        super("Line " + line + ": " + msg);
     }
 }
