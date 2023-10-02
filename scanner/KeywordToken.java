@@ -44,6 +44,10 @@ public class KeywordToken extends Token
         this.keyword = Keyword.valueOf(inpToken);
     }
 
+    /**
+     * Checks whether an identifier is a Keyword
+     * @param identifier   The identifier
+     */
     public static boolean isKeyword(String identifier)
     {
         try 
@@ -82,6 +86,11 @@ public class KeywordToken extends Token
         return inpToken;
     }
 
+    /**
+     * Checks whether this KeywordToken represents a Keyword
+     * @param other The Keyword to compare to
+     * @return      Whether this KeywordToken is a Keyword
+     */
     public boolean equals(Keyword other)
     {
         return keyword.equals(other);

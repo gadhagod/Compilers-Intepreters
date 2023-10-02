@@ -108,6 +108,11 @@ public class OperandToken extends Token
         return inpToken;
     }
 
+    /**
+     * Checks whether this OperandToken is an Operand
+     * @param other  The Operand to compare
+     * @return       Whether this OperandToken represents other
+     */
     public boolean equals(Operand other)
     {
         return operand.equals(other);

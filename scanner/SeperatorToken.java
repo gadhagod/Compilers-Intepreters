@@ -75,6 +75,11 @@ public class SeperatorToken extends Token
         return inpToken;
     }
 
+    /**
+     * Checks whether this Token represents a Seperator
+     * @param other The Seperator to compare to
+     * @return      Whether this Token represents other
+     */
     public boolean equals(Seperator other)
     {
         return seperator.equals(other);

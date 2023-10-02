@@ -8,6 +8,11 @@ import exceptions.*;
 import scanner.KeywordToken.Keyword;
 import scanner.OperandToken.Operand;
 
+/**
+ * Parses the Pascal program (second phase)
+ * @author  Aarav Borthakur
+ * @version 10/2/23
+ */
 public class Parser 
 {
     private java.util.Scanner lineScanner;
@@ -15,6 +20,12 @@ public class Parser
     private Scanner scanner;
     private Token currToken;
 
+    /**
+     * Constrcuts a Parser
+     * @param scanner            The Scanner on the language
+     * @throws IOException when there is a problem reading the file       
+     * @throws LanguageException when there is an error in the Pascal program
+     */
     public Parser(Scanner scanner) throws IOException, LanguageException
     {
         this.scanner = scanner;
@@ -23,6 +34,10 @@ public class Parser
         parseStatement();
     }
 
+    /**
+     * Reads input for READLN
+     * @returns The input
+     */
     private String readLine()
     {   
         if (lineScanner == null)
@@ -32,6 +47,14 @@ public class Parser
         return lineScanner.nextLine();
     }
 
+    /**
+     * Asserts that an object of a class and returns the object casted to 
+     * that class
+     * @param value         The value to cast
+     * @param expectedClass The class to cast it to
+     * @return              value casted to expectedClass
+     * @throws TypeMismatch When value is not of expectedClass
+     */
     private static <T> T expectType(Object value, Class<T> expectedClass) throws TypeMismatch
     {
         if (!expectedClass.isInstance(value))
@@ -41,6 +64,13 @@ public class Parser
         return expectedClass.cast(value);
     }
 
+    /**
+     * Checks that the next token is what's expected and advances
+     * the reader
+     * @param expectedToken      The expected token
+     * @throws IOException       When there is a problem reading the file
+     * @throws LanguageException When there is an error in the Pascal program
+     */
     private void eat(Token expectedToken) throws IOException, LanguageException
     {
         if (currToken.equals(expectedToken))
@@ -53,6 +83,12 @@ public class Parser
         }
     }
 
+    /**
+     * Gets the value of the current number
+     * @return The value of the number
+     * @throws IOException when there is a problem reading the file
+     * @throws LanguageException when there is an error in the Pascal program
+     */
     private int parseNumber() throws IOException, LanguageException
     {
         int val = ((DigitToken) (currToken)).getValue();
@@ -69,6 +105,12 @@ public class Parser
     }
     */
     
+    /**
+     * Parses the current expression
+     * @return                   The value of the current expression
+     * @throws IOException       When there is a problem reading the file
+     * @throws LanguageException When there is an error in the Pascal program
+     */
     private Object parseExpr() throws IOException, LanguageException
     {
         Object val = parseTerm();
@@ -122,6 +164,12 @@ public class Parser
         return new TypeMismatch("any", val.getClass().getName());
     }
 
+    /**
+     * Parses the current identifier
+     * @return                   The name of the identifier
+     * @throws IOException       When there is a problem reading the file
+     * @throws LanguageException When there is an error in the Pascal program
+     */
     private String parseIdentifier() throws IOException, LanguageException
     {
         IdentifierToken token = (IdentifierToken) (currToken);
@@ -129,6 +177,12 @@ public class Parser
         return token.getValue();
     }
 
+    /**
+     * Parses the current String
+     * @return                   The value of the String
+     * @throws IOException       When there is a problem reading the file
+     * @throws LanguageException When there is an error in the Pascal program
+     */
     private String parseString() throws IOException, LanguageException
     {
         StringToken token = (StringToken) (currToken);
@@ -136,6 +190,12 @@ public class Parser
         return token.getValue();
     }
 
+    /**
+     * Parses current factor
+     * @return                   The value of the factor
+     * @throws IOException       When there is a problem reading the file
+     * @throws LanguageException When there is an error in the Pascal program
+     */
     private Object parseFactor() throws IOException, LanguageException
     {
         if (
@@ -188,6 +248,12 @@ public class Parser
         }
     }
 
+    /**
+     * Parses the current operand
+     * @return                   The value of the Operand
+     * @throws IOException       When there is a problem reading the file
+     * @throws LanguageException When there is an error in the Pascal program
+     */
     private Operand parseOperand() throws IOException, LanguageException
     {
         OperandToken curr = (OperandToken) (currToken);
@@ -195,6 +261,12 @@ public class Parser
         return curr.getValue();
     }
 
+    /**
+     * Parses the current term
+     * @return                   The value of the term
+     * @throws IOException       When there is a problem reading the file 
+     * @throws LanguageException When there is an error in the Pascal program
+     */
     private Object parseTerm() throws IOException, LanguageException
     {
         Object val = parseFactor();
@@ -242,6 +314,11 @@ public class Parser
         }
     }
 
+    /**
+     * Parses the current statement
+     * @throws IOException       When there is a problem reading the file
+     * @throws LanguageException When there is an error in the Pascal program
+     */
     /*private*/ public void parseStatement() throws IOException, LanguageException
     {
         Token token = currToken;

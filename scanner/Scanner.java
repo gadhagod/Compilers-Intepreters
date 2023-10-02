@@ -45,9 +45,8 @@ public class Scanner
         getNextChar();
     }
     /**
-     * Sets the next character of the input stream to
-     * currentChar
-     * @throws IOException
+     * Sets the next character of the input stream to currentChar
+     * @throws IOException when there is a problem reading the file
      */
     private void getNextChar()
     {
@@ -67,10 +66,8 @@ public class Scanner
     /**
      * Sets the next character of the input stream to currentChar
      * given the next character
-     * @param expected  The expected next character
-     * @throws ScanErrorException if the expected character is not 
-     *                            the value of currentChar after
-     *                            getNextChar()
+     * @param expected        The expected next character
+     * @throws UnexpctedToken When an unexpected token is encoutered
      */
     private void eat(char expected) throws UnexpectedToken
     {
@@ -171,7 +168,8 @@ public class Scanner
 
     /**
      * Returns the operand at the current position of the input stream
-     * @return  The seperator as a String
+     * @return                  The seperator as a String
+     * @throws UnexpectedToken  If an unexpected token is encountered
      */
     public String scanSeperator() throws UnexpectedToken
     {
@@ -183,6 +181,7 @@ public class Scanner
     /**
      * Returns the number at the current position of the input stream
      * @return  The number as a String
+     * @throws UnexpectedToken  If an unexpected token is encountered
      */
     public String scanNumber() throws UnexpectedToken
     {
@@ -195,6 +194,12 @@ public class Scanner
         return lexeme;
     }
     
+    /**
+     * Returns the String at the current position of the input stream
+     * @return                  The value of the String
+     * @throws UnexpectedToken  If an unexpected token is encountered
+     * @throws UnexpectedEOF    If the String is not terminated
+     */
     public String scanString() throws UnexpectedToken, UnexpectedEOF
     {
         char opener = currentChar;
@@ -215,7 +220,8 @@ public class Scanner
 
     /**
      * Returns the identifier at the current position of the input stream
-     * @return  The identifier as a String
+     * @return                  The identifier as a String
+     * @throws UnexpectedToken  If an unexpected token is encountered
      */
     public String scanIdentifier() throws UnexpectedToken
     {
@@ -230,7 +236,8 @@ public class Scanner
     
     /**
      * Returns the operand at the current position of the input stream
-     * @return  The operand as a String
+     * @return                  The operand as a String
+     * @throws UnexpectedToken  If an unexpected token is encountered
      */
     public String scanOperand() throws UnexpectedToken
     {
@@ -242,7 +249,8 @@ public class Scanner
     /**
      * Passes over characters in the input stream until a target
      * character is found
-     * @param target    The target character to find
+     * @param target            The target character to find
+     * @throws UnexpectedToken  If an unexpected token is encountered
      */
     private void skipUntilFound(char target) throws UnexpectedToken
     {
@@ -255,7 +263,8 @@ public class Scanner
     /**
      * Skips over characters in input stream until a target String
      * is found
-     * @param target    The target string to find
+     * @param target            The target string to find
+     * @throws UnexpectedToken  If an unexpected token is encountered
      */
     private void skipUntilFound(String target) throws UnexpectedToken
     {
@@ -269,7 +278,10 @@ public class Scanner
 
     /**
      * Gets the next token in the input stream
-     * @throws ScanErrorException
+     * @return                  The next token in the input stream
+     * @throws IOException      When there was a problem reading the file
+     * @throws UnexpectedToken  When an unexpected token is encountered
+     * @throws UnexpectedEOF    When a String is not terminated
      */
     public Token nextToken() throws IOException, UnexpectedToken, UnexpectedEOF
     {

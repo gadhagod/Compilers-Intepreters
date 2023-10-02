@@ -13,8 +13,8 @@ public class DigitToken extends Token
 
     /**
      * Constructs a DigitToken
-     * @param inpToken  The String representation of the Token
-     * @throws ScanErrorException
+     * @param inpToken          The String representation of the Token
+     * @throws UnexpectedToken  When an unexpected Token is encountered
      */
     public DigitToken(String inpToken) throws UnexpectedToken
     {
@@ -47,6 +47,11 @@ public class DigitToken extends Token
         return inpToken;
     }
 
+    /**
+     * Checks whether this DigitToken equals a number
+     * @param other The integer to compare to
+     * @return  Whether this DigitToken represents other
+     */
     public int equals(int other)
     {
         return digit = other;
