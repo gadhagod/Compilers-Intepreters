@@ -25,7 +25,8 @@ public class OperandToken extends Token
         GREATER_OR_EQUAL,
         LESS,
         LESS_OR_EQUAL,
-        EQUALS
+        EQUALS,
+        NOT_EQUAL
     }
 
     private Operand operand;
@@ -65,7 +66,7 @@ public class OperandToken extends Token
         }
         else if (inpToken.equals(">"))
         {
-            operand = Operand.DIVISION;
+            operand = Operand.GREATER;
         }
         else if (inpToken.equals(">="))
         {
@@ -82,6 +83,10 @@ public class OperandToken extends Token
         else if (inpToken.equals("="))
         {
             operand = Operand.EQUALS;
+        }
+        else if (inpToken.equals("<>"))
+        {
+            operand = Operand.NOT_EQUAL;
         }
         else
         {

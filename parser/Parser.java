@@ -1,12 +1,34 @@
 package parser;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedList;
 
+import ast.Assignment;
+import ast.BinOp;
+import ast.Block;
+import ast.Bool;
+import ast.Brk;
+import ast.Cont;
+import ast.Expression;
+import ast.For;
+import ast.If;
+import ast.Number;
+import ast.ProcedureDecleration;
+import ast.Program;
+import ast.Readln;
+import ast.Statement;
+import ast.Str;
+import ast.Variable;
+import ast.While;
+import ast.Writeln;
+import environment.Environment;
 import scanner.*;
 import exceptions.*;
+import jumps.Break;
+import jumps.Jump;
 import scanner.KeywordToken.Keyword;
 import scanner.OperandToken.Operand;
+import scanner.SeperatorToken.Seperator;
 
 /**
  * Parses the Pascal program (second phase)
@@ -15,36 +37,21 @@ import scanner.OperandToken.Operand;
  */
 public class Parser 
 {
-    private java.util.Scanner lineScanner;
-    private HashMap<String, Object> vars;
     private Scanner scanner;
     private Token currToken;
+    private Environment env;
 
     /**
      * Constrcuts a Parser
-     * @param scanner            The Scanner on the language
-     * @throws IOException when there is a problem reading the file       
-     * @throws LanguageException when there is an error in the Pascal program
+     * @param scanner             The Scanner on the language
+     * @throws IOException        When there is a problem reading the file       
+     * @throws LanguageException  When there is an error in the Pascal program 
      */
-    public Parser(Scanner scanner) throws IOException, LanguageException
+    public Parser(Scanner scanner, Environment env) throws IOException, LanguageException
     {
         this.scanner = scanner;
-        vars = new HashMap<String, Object>();
+        this.env = env;
         currToken = scanner.nextToken();
-        parseStatement();
-    }
-
-    /**
-     * Reads input for READLN
-     * @returns The input
-     */
-    private String readLine()
-    {   
-        if (lineScanner == null)
-        {
-            lineScanner = new java.util.Scanner(System.in);
-        }
-        return lineScanner.nextLine();
     }
 
     /**
@@ -55,7 +62,7 @@ public class Parser
      * @return              value casted to expectedClass
      * @throws TypeMismatch When value is not of expectedClass
      */
-    private static <T> T expectType(Object value, Class<T> expectedClass) throws TypeMismatch
+    public static <T> T expectType(Object value, Class<T> expectedClass) throws TypeMismatch
     {
         if (!expectedClass.isInstance(value))
         {
@@ -70,6 +77,7 @@ public class Parser
      * @param expectedToken      The expected token
      * @throws IOException       When there is a problem reading the file
      * @throws LanguageException When there is an error in the Pascal program
+     * @postcondition            Advances the current token character by one
      */
     private void eat(Token expectedToken) throws IOException, LanguageException
     {
@@ -84,16 +92,19 @@ public class Parser
     }
 
     /**
-     * Gets the value of the current number
+     * Gets the Number value of the current number
      * @return The value of the number
      * @throws IOException when there is a problem reading the file
      * @throws LanguageException when there is an error in the Pascal program
+     * @precondition  The currToken is a digit
+     * @postcondition           The number is parsed and currToken is after
+     *                           the number
      */
-    private int parseNumber() throws IOException, LanguageException
+    private Number parseNumber() throws IOException, LanguageException
     {
         int val = ((DigitToken) (currToken)).getValue();
         eat(currToken);
-        return val;
+        return new Number(val);
     }
     
     /*
@@ -106,69 +117,32 @@ public class Parser
     */
     
     /**
-     * Parses the current expression
+     * Gets the Expression value of the expression
      * @return                   The value of the current expression
      * @throws IOException       When there is a problem reading the file
      * @throws LanguageException When there is an error in the Pascal program
+     * @postcondition           The expression is parsed and currToken is after
+     *                           the expression
      */
-    private Object parseExpr() throws IOException, LanguageException
+    private Expression parseExpr() throws IOException, LanguageException
     {
-        Object val = parseTerm();
-        if (val instanceof Integer)
+        Expression val = parseTerm();
+        while (currToken instanceof OperandToken)
         {
-            Integer intVal = (Integer) (val);
-            while (currToken instanceof OperandToken)
-            {
-                Operand oper = parseOperand();
-                Integer secondTerm = expectType(
-                    parseTerm(), 
-                    Integer.class
-                );
-                if (oper.equals(Operand.ADDITION))
-                {
-                    intVal += secondTerm;
-                }
-                else if (oper.equals(Operand.SUBTRACTION))
-                {
-                    intVal -= secondTerm;
-                }
-                else
-                {
-                    throw new TypeMismatch(intVal, secondTerm, oper);
-                }
-            }
-            return intVal;
+            Operand oper = parseOperand();
+            Expression secondTerm = parseTerm();
+            return new BinOp(val, oper, secondTerm);
         }
-        else if (val instanceof String)
-        {
-            String strVal = (String) (val);
-            while (currToken instanceof OperandToken)
-            {
-                Operand oper = parseOperand();
-                String secondTerm = expectType(
-                    parseTerm(), 
-                    String.class
-                );
-                
-                if (oper.equals(Operand.ADDITION))
-                {
-                    strVal += secondTerm;
-                }
-                else
-                {
-                    throw new TypeMismatch("string", "string", oper);
-                }
-            }
-            return strVal;
-        }
-        return new TypeMismatch("any", val.getClass().getName());
+        return val;
     }
 
     /**
      * Parses the current identifier
-     * @return                   The name of the identifier
+     * @return                   The String name of the identifier
      * @throws IOException       When there is a problem reading the file
      * @throws LanguageException When there is an error in the Pascal program
+     * @postcondition            The identifier is parsed and currToken is after
+     *                           the identifier
      */
     private String parseIdentifier() throws IOException, LanguageException
     {
@@ -179,31 +153,48 @@ public class Parser
 
     /**
      * Parses the current String
-     * @return                   The value of the String
+     * @return                   The Expression value of the String
      * @throws IOException       When there is a problem reading the file
      * @throws LanguageException When there is an error in the Pascal program
+     * @postcondition           The string is parsed and currToken is after
+     *                           the string
      */
-    private String parseString() throws IOException, LanguageException
+    private Str parseString() throws IOException, LanguageException
     {
         StringToken token = (StringToken) (currToken);
         eat(token);
-        return token.getValue();
+        return new Str(token.getValue());
+    }
+    
+    /**
+     * Gets Expression value of the Boolean
+     * @return The value of the boolean
+     * @throws IOException
+     * @throws LanguageException
+     */
+    private Bool parseBoolean() throws IOException, LanguageException
+    {
+        BooleanToken token = (BooleanToken) (currToken);
+        eat(token);
+        return new Bool(token.getValue());
     }
 
     /**
      * Parses current factor
-     * @return                   The value of the factor
+     * @return                   The Expression value of the factor
      * @throws IOException       When there is a problem reading the file
      * @throws LanguageException When there is an error in the Pascal program
+     * @postcondition            The factor is parsed and currToken is after
+     *                           the factor
      */
-    private Object parseFactor() throws IOException, LanguageException
+    private Expression parseFactor() throws IOException, LanguageException
     {
         if (
             currToken instanceof SeperatorToken && 
             ((SeperatorToken) (currToken)).equals(SeperatorToken.Seperator.OPEN_PAREN))
         {
             eat(new SeperatorToken("("));
-            Object val = parseExpr();
+            Expression val = parseExpr();
             eat(new SeperatorToken(")"));
             return val;
         }
@@ -213,7 +204,11 @@ public class Parser
         )
         {
             eat(new OperandToken("-"));
-            return -(Integer) (parseFactor());
+            return new BinOp(
+                new Number(-1), 
+                Operand.MULTIPLICATION, 
+                parseFactor()
+            );
         }
         else if (currToken instanceof DigitToken)
         {
@@ -222,26 +217,18 @@ public class Parser
         else if (currToken instanceof IdentifierToken)
         {
             String id = parseIdentifier();
-            Object value = vars.get(id);
-            if (value == null)
-            {
-                throw new VariableNotDefined(id);
-            }
+            Expression value = new Variable(id);
+
             return value;
         }
         else if (currToken instanceof StringToken)
         {
             return parseString();
         }
-        /*
-        else if (
-            currToken instanceof KeywordToken && 
-            ((KeywordToken) currToken).isLogicalOperator()
-        )
+        else if (currToken instanceof BooleanToken)
         {
-            return parseKeyword();
+            return parseBoolean();
         }
-        */
         else
         {
             throw new UnexpectedToken(currToken.getValue().toString());
@@ -250,9 +237,11 @@ public class Parser
 
     /**
      * Parses the current operand
-     * @return                   The value of the Operand
+     * @return                   The Operand value
      * @throws IOException       When there is a problem reading the file
      * @throws LanguageException When there is an error in the Pascal program
+     * @postcondition            The operand is parsed and currToken is after
+     *                           the operand
      */
     private Operand parseOperand() throws IOException, LanguageException
     {
@@ -263,54 +252,59 @@ public class Parser
 
     /**
      * Parses the current term
-     * @return                   The value of the term
+     * @return                   The Expression value of the term
      * @throws IOException       When there is a problem reading the file 
      * @throws LanguageException When there is an error in the Pascal program
+     * @postcondition            The term is parsed and currToken is after
+     *                           the term
      */
-    private Object parseTerm() throws IOException, LanguageException
+    private Expression parseTerm() throws IOException, LanguageException
     {
-        Object val = parseFactor();
-        if (val instanceof Integer)
+        Expression expr = parseFactor();
+        if (expr instanceof Number)
         {
-            int intVal = (Integer) val;
-            while (
-               ((currToken instanceof OperandToken) && 
-                (
-                    ((OperandToken) (currToken)).equals(Operand.MULTIPLICATION) ||
-                    ((OperandToken) (currToken)).equals(Operand.DIVISION)
-                )) ||
-                ((currToken instanceof KeywordToken) && (((KeywordToken) (currToken)).equals(Keyword.mod)))
-            )
+            while ((currToken instanceof OperandToken) && (
+                ((OperandToken) (currToken)).equals(Operand.MULTIPLICATION) ||
+                ((OperandToken) (currToken)).equals(Operand.DIVISION) ||
+                ((OperandToken) (currToken)).equals(Operand.MODULO) ||
+                ((OperandToken) (currToken)).equals(Operand.EQUALS) ||
+                ((OperandToken) (currToken)).equals(Operand.NOT_EQUAL) ||
+                ((OperandToken) (currToken)).equals(Operand.GREATER) ||
+                ((OperandToken) (currToken)).equals(Operand.LESS) ||
+                ((OperandToken) (currToken)).equals(Operand.GREATER_OR_EQUAL) ||
+                ((OperandToken) (currToken)).equals(Operand.LESS_OR_EQUAL)
+
+            ))
             {
-                if (currToken instanceof OperandToken)
+                Operand oper = parseOperand();
+                Expression second = expectType(parseFactor(), Number.class);
+                
+                /*
+                if (
+                    ((OperandToken) (currToken)).equals(Operand.MULTIPLICATION) ||
+                    ((OperandToken) (currToken)).equals(Operand.DIVISION) ||
+                    ((OperandToken) (currToken)).equals(Operand.MODULO) ||
+                    ((OperandToken) (currToken)).equals(Operand.EQUALS) ||
+                    ((OperandToken) (currToken)).equals(Operand.NOT_EQUAL) ||
+                    ((OperandToken) (currToken)).equals(Operand.GREATER) ||
+                    ((OperandToken) (currToken)).equals(Operand.LESS) ||
+                    ((OperandToken) (currToken)).equals(Operand.GREATER_OR_EQUAL) ||
+                    ((OperandToken) (currToken)).equals(Operand.LESS_OR_EQUAL)
+                )
                 {
-                    Operand oper = parseOperand();
-                    int second = (Integer) parseFactor();
-                    if (oper.equals(Operand.MULTIPLICATION))
-                    {
-                        intVal *= second;
-                    }
-                    else if (oper.equals(Operand.DIVISION))
-                    {
-                        intVal /= second;
-                    }
                 }
-                else  // currToken is a KeywordToken
-                {
-                    eat(new KeywordToken("mod"));
-                    int second = expectType(parseFactor(), Integer.class);
-                    intVal %= second;
-                }
+                */
+                expr = new BinOp(expr, oper, second);
             }
-            return intVal;
+            return expr;
         }
-        else if (val instanceof String)
+        else if (expr instanceof Str)
         {
-            return val;
+            return expr;
         }
-        else 
+        else
         {
-            return val;
+            return expr;
         }
     }
 
@@ -318,9 +312,12 @@ public class Parser
      * Parses the current statement
      * @throws IOException       When there is a problem reading the file
      * @throws LanguageException When there is an error in the Pascal program
+     * @throws Break
+     * @return                  The statement
      */
-    /*private*/ public void parseStatement() throws IOException, LanguageException
+    private Statement parseStatement() throws IOException, LanguageException
     {
+        Statement stmt;
         Token token = currToken;
         eat(token);
         if (
@@ -328,7 +325,8 @@ public class Parser
             ((KeywordToken) (token)).equals(Keyword.EOF)
         )
         {
-            System.exit(1);
+            System.exit(0);
+            throw new IOException(); // dummy throw to pass IO exception
         }
         else if (
             token instanceof KeywordToken && 
@@ -336,7 +334,7 @@ public class Parser
         )
         {
             eat(new SeperatorToken("("));
-            System.out.println(parseExpr());
+            stmt = new Writeln(parseExpr());
             eat(new SeperatorToken(")"));
         }
         else if (token instanceof KeywordToken && ((KeywordToken) (token)).equals(Keyword.READLN))
@@ -344,7 +342,7 @@ public class Parser
             eat(new SeperatorToken("("));
             String varName = expectType(parseIdentifier(), String.class);
             eat(new SeperatorToken(")"));
-            vars.put(varName, readLine());
+            stmt = new Readln(varName);
         }
         else if (
             token instanceof KeywordToken && 
@@ -352,24 +350,118 @@ public class Parser
         )
         {
             Token statementOpener = currToken;
+            LinkedList<Statement> blockStatements = new LinkedList<Statement>();
             while (!(
                 (statementOpener instanceof KeywordToken) && ((KeywordToken) statementOpener).equals(Keyword.END)
             ))
             {
-                parseStatement();
+                blockStatements.add(parseStatement());
                 statementOpener = currToken;
             }
             eat(new KeywordToken(Keyword.END.name()));
+            stmt = new Block(blockStatements);
+        }
+        else if (
+            token instanceof KeywordToken && 
+            ((KeywordToken) (token)).equals(Keyword.FOR)
+        )
+        {
+            String startName = parseIdentifier();
+            eat(new OperandToken(":="));
+            Expression startVal = parseExpr();
+            env.setVariable(startName, startVal);
+            eat(new KeywordToken(Keyword.TO.name()));
+            Expression endVal = parseExpr();
+            eat(new KeywordToken(Keyword.DO.name()));
+            Statement _do = parseStatement();
+            return new For(startName, endVal, _do);
+        }
+        else if (token instanceof KeywordToken && ((KeywordToken) (token)).equals(Keyword.BREAK))
+        {
+            stmt = new Brk();
+        }
+        else if (token instanceof KeywordToken && ((KeywordToken) (token)).equals(Keyword.CONTINUE))
+        {
+            stmt = new Cont();
+        }
+        else if (token instanceof KeywordToken && ((KeywordToken) (token)).equals(Keyword.IF))
+        {
+            Expression cond = parseExpr();
+            eat(new KeywordToken(Keyword.THEN.name()));
+            Statement then = parseStatement();
+            if ((currToken instanceof KeywordToken) && (((KeywordToken) currToken).equals(Keyword.ELSE)))
+            {
+                eat(currToken);
+                Statement _else = parseStatement();
+                return new If(cond, then, _else);
+            }
+            return new If(cond, then);
+            // return here because we don't eat a semicolon after and if statement
+        }
+        else if (token instanceof KeywordToken && ((KeywordToken) (token)).equals(Keyword.WHILE))
+        {
+            Expression cond = parseExpr();
+            eat(new KeywordToken(Keyword.DO.name()));
+            Statement _do = parseStatement();
+            return new While(cond, _do);
         }
         else if (token instanceof IdentifierToken)
         {
             eat(new OperandToken(":="));
-            vars.put(((IdentifierToken) (token)).getValue(), parseExpr());
+            stmt = new Assignment(((IdentifierToken) (token)).getValue(), parseExpr());
         }
         else
         {
             throw new UnexpectedToken(token);
         }
         eat(new SeperatorToken(";"));
+        return stmt;
+    }
+
+    public ProcedureDecleration parseProcedure() throws IOException, LanguageException
+    {
+        eat(new KeywordToken(Keyword.PROCEDURE.name()));
+        String name = parseIdentifier();
+        eat(new SeperatorToken("("));
+        eat(new SeperatorToken(")"));
+        eat(new SeperatorToken(";"));
+        return new ProcedureDecleration(name, parseStatement());
+    }
+
+    private Program parseProgram(Environment env) throws IOException, LanguageException
+    {
+        LinkedList<ProcedureDecleration> procs = new LinkedList<ProcedureDecleration>();
+        while (currToken.equals(new KeywordToken(Keyword.PROCEDURE.name())))
+        {
+            procs.add(parseProcedure());
+        }
+        return new Program(procs, parseStatement(), env);
+    }
+
+    /**
+     * Executes a program given the Scanner 
+     * @throws LanguageException
+     * @throws IOException
+     */
+    public void execute() throws LanguageException, IOException
+    {
+        while (scanner.hasNext())
+        {
+            try
+            {
+                parseStatement().exec(env);
+            }
+            catch (Jump err)
+            {
+                if (err instanceof Break)
+                {
+                    throw new IllegalBreak();
+                }
+                else
+                {
+                    throw new IllegalContinue();
+                }
+            }
+        }
     }
 }

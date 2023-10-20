@@ -21,6 +21,16 @@ public class TypeMismatch extends LanguageException
     }
     
     /**
+     * Constructs a TypeMismatch given expected and recieved type
+     * @param expected  The expected type
+     * @param recieved  The recieved type
+     */
+    public TypeMismatch(String recieved)
+    {
+        super("Unexpected type: recieved <" + recieved + ">");
+    }
+    
+    /**
      * Constructs a TypeMismatch given the objects and the operator as an Operand
      * @param expected  The expected type
      * @param recieved  The recieved type

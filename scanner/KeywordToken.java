@@ -22,12 +22,18 @@ public class KeywordToken extends Token
         WRITELN,
         READLN,
         EOF,
+        IF,
+        THEN,
+        ELSE,
+        FOR,
+        TO,
+        BREAK,
+        CONTINUE
         /*
         AND,
         OR,
         NOT,
         */
-        mod
     }
 
     private String inpToken;

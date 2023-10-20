@@ -1,0 +1,52 @@
+package ast;
+
+import environment.Environment;
+import exceptions.TypeMismatch;
+import exceptions.VariableNotDefined;
+
+/**
+ * Represents a variable assignment statement
+ * @author  Aarav Borthakur
+ * @version 10/17/23
+ */
+public class Assignment extends Statement
+{
+    private String name;
+    private Expression value;
+    
+    /**
+     * Constructs and assignment statement given the variable
+     * to assign's name and its value
+     * @param name  The name of the variable
+     * @param value The value of the variable
+     */
+    public Assignment(String name, Expression value)
+    {
+        this.name = name;
+        this.value = value;
+    }
+
+    /**
+     * Executes the assignment
+     * @param env  The Environment this statement is in
+     * @throws TypeMismatch
+     * @throws VariableNotDefined
+     */
+    @Override
+    public void exec(Environment env) throws TypeMismatch, VariableNotDefined
+    {
+        env.setVariable(name, value);
+    }
+    
+    /**
+     * Gets the String representation of the statement
+     * @param env  The Environment this statement is in
+     * @return     The String representation of the statement
+     * @throws VariableNotDefined
+     * @throws TypeMismatch
+     */
+    public String toString(Environment env) throws TypeMismatch, VariableNotDefined
+    {
+        return name + " := " + value.toString(env);
+    }
+}

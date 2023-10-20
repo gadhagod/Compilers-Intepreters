@@ -128,7 +128,7 @@ public class Scanner
      */
     public static boolean isOperand(char character)
     {
-        return "=+-*/%:<>".indexOf(character) >= 0;
+        return "=+-–*/%:<>".indexOf(character) >= 0;
     }
     
     /**
@@ -317,6 +317,15 @@ public class Scanner
             if (KeywordToken.isKeyword(identifier))
             {
                 return new KeywordToken(identifier);
+            }
+            else if (identifier.toLowerCase().equals("mod"))
+            {
+                return new OperandToken("%");
+            }
+            else if (BooleanToken.isBoolean(identifier))
+            {
+                BooleanToken x = new BooleanToken(identifier);
+                return x;
             }
             return new IdentifierToken(identifier);
         }

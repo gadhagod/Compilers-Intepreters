@@ -1,6 +1,7 @@
 package testers;
 import java.io.File;
 
+import environment.Environment;
 import scanner.Scanner;
 import parser.Parser;
 
@@ -17,10 +18,8 @@ public class ParserTester
             exp += reader.nextLine() + "\n";
         }
         Scanner scanner = new Scanner(exp);
-        Parser parser = new Parser(scanner);
-        while (scanner.hasNext())
-        {
-            parser.parseStatement();
-        }
+        Environment env = new Environment();
+        Parser parser = new Parser(scanner, env);
+        parser.execute();
     }
 }
