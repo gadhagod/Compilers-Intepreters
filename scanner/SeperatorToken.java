@@ -18,7 +18,8 @@ public class SeperatorToken extends Token
         CLOSE_PAREN,
         OPEN_BRACE,
         CLOSE_BRACE,
-        SEMICOLON
+        SEMICOLON,
+        COMMA
     }
 
     private String inpToken;
@@ -50,6 +51,10 @@ public class SeperatorToken extends Token
         else if (inpToken.equals("}"))
         {
             seperator = Seperator.CLOSE_BRACE;
+        }
+        else if (inpToken.equals(","))
+        {
+            seperator = Seperator.COMMA;
         }
         else
         {

@@ -28,7 +28,8 @@ public class KeywordToken extends Token
         FOR,
         TO,
         BREAK,
-        CONTINUE
+        CONTINUE,
+        EXIT
         /*
         AND,
         OR,

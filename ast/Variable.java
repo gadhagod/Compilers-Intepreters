@@ -29,11 +29,6 @@ public class Variable extends Expression
      */
     public Expression eval(Environment env) throws TypeMismatch, VariableNotDefined
     {
-        Expression val = env.getVariable(varName);
-        if (val == null)
-        {
-            throw new VariableNotDefined(varName);
-        }
-        return val;
+        return env.getVariable(varName);
     }
 }

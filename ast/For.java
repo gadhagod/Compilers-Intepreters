@@ -42,7 +42,7 @@ public class For extends Statement
      * @throws VariableNotDefined
      * @throws Break
      */
-    private void addCount(Environment env) throws TypeMismatch, VariableNotDefined, Break
+    private void addCount(Environment env) throws LanguageException
     {
         Expression currExpr = env.getVariable(currName);
         Expression maxExpr = max;
@@ -67,7 +67,7 @@ public class For extends Statement
      * @throws VariableNotDefined
      * @precondition        The variable with name startName is declared
      */
-    public void exec(Environment env) throws LanguageException
+    public void exec(Environment env) throws LanguageException, Jump
     {
         try 
         {
@@ -79,10 +79,8 @@ public class For extends Statement
                 }
                 catch (Continue err)
                 {}
-                catch (Jump err)
-                {
-                    throw (Break) (err);
-                }
+                catch (Break err)
+                {}
                 addCount(env);
             }
         }
@@ -97,7 +95,7 @@ public class For extends Statement
      * @throws VariableNotDefined
      * @throws TypeMismatch
      */
-    public String toString(Environment env) throws TypeMismatch, VariableNotDefined
+    public String toString(Environment env) throws LanguageException
     {
         return "FOR " + currName + " < " + max.toString(env);
     }

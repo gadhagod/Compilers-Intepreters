@@ -7,6 +7,11 @@ package exceptions;
  */
 public class VariableNotDefined extends LanguageException
 {
+    /**
+     * Constructs a VariableNotDefined exception given the name of the
+     * attemptedly accessed variable
+     * @param varName   The name of the variable
+     */
     public VariableNotDefined(String varName)
     {
         super("Variable " + varName + " not defined");

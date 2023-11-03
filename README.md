@@ -2,8 +2,8 @@
 - READLN
 - else conditionals
 - FOR loops
-- break statements
-- continue statements
+- BREAK statements
+- CONTINUE statements
 - token types
 - mod operator
 - single-line and multi-line comments (nested comments accepted)
@@ -13,3 +13,6 @@
 - support for booleans as a native type
 - error reporting
 - error line number reporting
+- procedure EXIT statement
+    - procedure return values with EXIT(returnVal)
+- procedure call as a statement

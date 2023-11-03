@@ -1,6 +1,7 @@
 package ast;
 
 import environment.Environment;
+import exceptions.LanguageException;
 import exceptions.TypeMismatch;
 import exceptions.VariableNotDefined;
 import parser.Parser;
@@ -38,7 +39,7 @@ public class BinOp extends Expression
      * @throws VariableNotDefined
      */
     @Override
-    public Expression eval(Environment env) throws TypeMismatch, VariableNotDefined
+    public Expression eval(Environment env) throws LanguageException
     {
         Object leftVal = left;
         while (leftVal instanceof Expression)
@@ -132,7 +133,7 @@ public class BinOp extends Expression
      * @throws TypeMismatch
      * @throws VariableNotDefined
      */
-    public String toString(Environment env) throws TypeMismatch, VariableNotDefined
+    public String toString(Environment env) throws LanguageException
     {
         return left.toString(env) + " " + operand + " " + right.toString(env);
     }    

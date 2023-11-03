@@ -2,6 +2,7 @@ package parser;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 
 import ast.Assignment;
 import ast.BinOp;
@@ -10,9 +11,12 @@ import ast.Bool;
 import ast.Brk;
 import ast.Cont;
 import ast.Expression;
+import ast.Ext;
 import ast.For;
 import ast.If;
 import ast.Number;
+import ast.ProcedureExpr;
+import ast.ProcedureStmt;
 import ast.ProcedureDecleration;
 import ast.Program;
 import ast.Readln;
@@ -25,7 +29,6 @@ import environment.Environment;
 import scanner.*;
 import exceptions.*;
 import jumps.Break;
-import jumps.Jump;
 import scanner.KeywordToken.Keyword;
 import scanner.OperandToken.Operand;
 import scanner.SeperatorToken.Seperator;
@@ -92,6 +95,46 @@ public class Parser
     }
 
     /**
+     * Converts the current comma seperated set enclosed by parenthesis in the Token stream
+     * to a List object. For example, '("hi", 1, 4)'' in in the token stream would be converted
+     * to a List containing [Str("hi"), Number(1), Number(4)]
+     * @param expectedClass  The type of the elements in the List; when parsing
+     *                       a set of parameter names, use String.class, when 
+     *                       parsing a list of parameter values, use Expression.class
+     * @return               The List of values in the comma-seperated set
+     */
+    public <T> List<T> parseCommaSeperatedSet(Class<T> expectedClass) throws IOException, LanguageException
+    {
+        List<T> paramNames = null;
+        eat(new SeperatorToken("("));
+        while (!((currToken instanceof SeperatorToken) && ((SeperatorToken) currToken).equals(Seperator.CLOSE_PAREN)))
+        {
+            if (paramNames == null)
+            {
+                // initialize LinkedList only if we have to
+                paramNames = new LinkedList<T>();
+            }
+            if (expectedClass.equals(String.class)) // param names
+            {
+                ((List<String>) paramNames).add(parseIdentifier());
+            }
+            else // param values
+            {
+                ((List<Expression>) paramNames).add(parseExpr());
+
+            }
+            if ((currToken instanceof SeperatorToken) && ((SeperatorToken) currToken).equals(Seperator.COMMA))
+            {
+                eat(new SeperatorToken(","));
+                // TODO: make sure comma exists before new param value
+                // TODO: right now, this may pass: "func(1 2)" without commas
+            }
+        }
+        eat(new SeperatorToken(")"));
+        return paramNames;
+    }
+
+    /**
      * Gets the Number value of the current number
      * @return The value of the number
      * @throws IOException when there is a problem reading the file
@@ -106,16 +149,6 @@ public class Parser
         eat(currToken);
         return new Number(val);
     }
-    
-    /*
-    private Keyword parseKeyword() throws IOException, LanguageException
-    {
-        Keyword val = ((KeywordToken) (currToken)).getValue();
-        eat(currToken);
-        return val;
-    }
-    */
-    
     /**
      * Gets the Expression value of the expression
      * @return                   The value of the current expression
@@ -217,9 +250,16 @@ public class Parser
         else if (currToken instanceof IdentifierToken)
         {
             String id = parseIdentifier();
-            Expression value = new Variable(id);
-
-            return value;
+            if (currToken.equals(new SeperatorToken("(")))
+            {
+                List<Expression> params = parseCommaSeperatedSet(Expression.class);
+                if (params == null)
+                {
+                    return new ProcedureExpr(id);
+                }
+                return new ProcedureExpr(id, params);
+            }
+            return new Variable(id);
         }
         else if (currToken instanceof StringToken)
         {
@@ -350,7 +390,7 @@ public class Parser
         )
         {
             Token statementOpener = currToken;
-            LinkedList<Statement> blockStatements = new LinkedList<Statement>();
+            List<Statement> blockStatements = new LinkedList<Statement>();
             while (!(
                 (statementOpener instanceof KeywordToken) && ((KeywordToken) statementOpener).equals(Keyword.END)
             ))
@@ -405,10 +445,39 @@ public class Parser
             Statement _do = parseStatement();
             return new While(cond, _do);
         }
+        else if (token instanceof KeywordToken && ((KeywordToken) (token)).equals(Keyword.EXIT))
+        {
+            if (currToken.equals(new SeperatorToken("(")))
+            {
+
+                eat(new SeperatorToken("("));
+                stmt = new Ext(parseExpr());
+                eat(new SeperatorToken(")"));
+            }
+            else
+            {
+                stmt = new Ext();
+            }
+        }
         else if (token instanceof IdentifierToken)
         {
-            eat(new OperandToken(":="));
-            stmt = new Assignment(((IdentifierToken) (token)).getValue(), parseExpr());
+            if (currToken.equals(new OperandToken(":=")))
+            {
+                eat(new OperandToken(":="));
+                stmt = new Assignment(((IdentifierToken) (token)).getValue(), parseExpr());
+            }
+            else
+            {
+                List<Expression> params = parseCommaSeperatedSet(Expression.class);
+                if (params == null)
+                {
+                    stmt = new ProcedureStmt(((IdentifierToken) token).toString());
+                }
+                else
+                {
+                    stmt = new ProcedureStmt(((IdentifierToken) token).toString(), params);
+                }
+            }
         }
         else
         {
@@ -418,24 +487,51 @@ public class Parser
         return stmt;
     }
 
+    /**
+     * Parses the current procedure in the Token stream
+     * @return  The Procedure decleration of the procedure
+     * @throws IOException
+     * @throws LanguageException
+     */
     public ProcedureDecleration parseProcedure() throws IOException, LanguageException
     {
         eat(new KeywordToken(Keyword.PROCEDURE.name()));
         String name = parseIdentifier();
-        eat(new SeperatorToken("("));
-        eat(new SeperatorToken(")"));
+        List<String> paramNames = parseCommaSeperatedSet(String.class);
         eat(new SeperatorToken(";"));
-        return new ProcedureDecleration(name, parseStatement());
+        if (paramNames == null)
+        {
+            return new ProcedureDecleration(name, parseStatement());
+        }
+        return new ProcedureDecleration(name, parseStatement(), paramNames);
+
     }
 
-    private Program parseProgram(Environment env) throws IOException, LanguageException
+    /**
+     * Parses the entire program by building an abstract syntax tree 
+     * representation of the Pascal program
+     * @return  The root of the constructed AST
+     * @throws IOException
+     * @throws LanguageException
+     */
+    private Program parseProgram() throws IOException, LanguageException
     {
-        LinkedList<ProcedureDecleration> procs = new LinkedList<ProcedureDecleration>();
-        while (currToken.equals(new KeywordToken(Keyword.PROCEDURE.name())))
+        boolean hasProcs = false;
+        if (currToken.equals(new KeywordToken(Keyword.PROCEDURE.name())))
         {
-            procs.add(parseProcedure());
+            hasProcs = true;
         }
-        return new Program(procs, parseStatement(), env);
+        if (hasProcs)
+        {
+            // create LinkedList only if we have to
+            List<ProcedureDecleration> procs = new LinkedList<ProcedureDecleration>();
+            while (currToken.equals(new KeywordToken(Keyword.PROCEDURE.name())))
+            {
+                procs.add(parseProcedure());
+            }
+            return new Program(procs, parseStatement());
+        }
+        return new Program(parseStatement());
     }
 
     /**
@@ -445,23 +541,6 @@ public class Parser
      */
     public void execute() throws LanguageException, IOException
     {
-        while (scanner.hasNext())
-        {
-            try
-            {
-                parseStatement().exec(env);
-            }
-            catch (Jump err)
-            {
-                if (err instanceof Break)
-                {
-                    throw new IllegalBreak();
-                }
-                else
-                {
-                    throw new IllegalContinue();
-                }
-            }
-        }
+        parseProgram().exec(env);
     }
 }

@@ -1,6 +1,7 @@
 package ast;
 
 import environment.Environment;
+import exceptions.LanguageException;
 import exceptions.TypeMismatch;
 import exceptions.VariableNotDefined;
 
@@ -33,7 +34,7 @@ public class Assignment extends Statement
      * @throws VariableNotDefined
      */
     @Override
-    public void exec(Environment env) throws TypeMismatch, VariableNotDefined
+    public void exec(Environment env) throws LanguageException
     {
         env.setVariable(name, value);
     }
@@ -45,7 +46,7 @@ public class Assignment extends Statement
      * @throws VariableNotDefined
      * @throws TypeMismatch
      */
-    public String toString(Environment env) throws TypeMismatch, VariableNotDefined
+    public String toString(Environment env) throws LanguageException
     {
         return name + " := " + value.toString(env);
     }

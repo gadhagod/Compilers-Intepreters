@@ -36,7 +36,7 @@ public class While extends Statement
      * @throws TypeMismatch
      * @throws VariableNotDefined
      */
-    private boolean evalCond(Environment env) throws TypeMismatch, VariableNotDefined
+    private boolean evalCond(Environment env) throws LanguageException
     {
         Object val = condition;
         while (val instanceof Expression)

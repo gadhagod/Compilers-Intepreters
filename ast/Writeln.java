@@ -1,6 +1,7 @@
 package ast;
 
 import environment.Environment;
+import exceptions.LanguageException;
 import exceptions.TypeMismatch;
 import exceptions.VariableNotDefined;
 
@@ -29,7 +30,7 @@ public class Writeln extends Statement
      * @throws      VariableNotDefined
      */
     @Override
-    public void exec(Environment env) throws TypeMismatch, VariableNotDefined
+    public void exec(Environment env) throws LanguageException
     {
         Object result = exp.eval(env);
         while (result instanceof Expression) {

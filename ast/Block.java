@@ -1,6 +1,6 @@
 package ast;
 
-import java.util.LinkedList;
+import java.util.List;
 
 import environment.Environment;
 import exceptions.LanguageException;
@@ -16,13 +16,13 @@ import jumps.Jump;
  */
 public class Block extends Statement
 {
-    private LinkedList<Statement> stmts;
+    private List<Statement> stmts;
 
     /**
      * Constructs a Block
      * @param stmts   The list of statements in the Block
      */
-    public Block(LinkedList<Statement> stmts)
+    public Block(List<Statement> stmts)
     {
         this.stmts = stmts;
     }

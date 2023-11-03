@@ -118,7 +118,7 @@ public class Scanner
      */
     public static boolean isSeperator(char character)
     {
-        return ";{}()".indexOf(character) >= 0;
+        return ";{}(),".indexOf(character) >= 0;
     }
 
     /**
