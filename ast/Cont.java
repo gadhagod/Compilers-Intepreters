@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import jumps.Continue;
 
@@ -29,5 +30,16 @@ public class Cont extends Statement
     public String toString(Environment env)
     {
         return "CONTINUE";
+    }
+
+    /**
+     * Throws an UnsupportedOperationException because continues 
+     * aren't supported in the compiler
+     * @param e     The Emitter to use to write out the MIPS instructions
+     */
+    @Override
+    public void compile(Emitter e) 
+    {
+        throw new UnsupportedOperationException("CONTINUE not implemented in compiled pascal");
     }
 }

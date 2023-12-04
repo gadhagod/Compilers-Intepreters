@@ -3,7 +3,6 @@ package ast;
 import java.util.List;
 
 import environment.Environment;
-import exceptions.ArugmentException;
 import exceptions.LanguageException;
 import jumps.Jump;
 
@@ -29,6 +28,15 @@ public class ProcedureDecleration
     }
     
     /**
+     * Gets the body statement of the procedure
+     * @return  The body of the procedure
+     */
+    public Statement getBody()
+    {
+        return body;
+    }
+
+    /**
      * Constructs a ProcedureDecleration 
      * @param name       The name of the procedure
      * @param body       The body code 
@@ -42,24 +50,6 @@ public class ProcedureDecleration
     }
 
     /**
-     * Executes the Procedure without procedure arguments
-     * @param rootEnv   The root Environment of the program
-     * @return          The return value of the Procedure
-     * @throws LanguageException
-     * @throws Jump
-     */
-    public Expression exec(/*Environment rootEnv*/) throws LanguageException, Jump 
-    {
-        Environment env = new Environment(/*rootEnv*/);
-        if (paramNames != null)
-        {
-            throw new ArugmentException(name, paramNames.size(), 0);
-        }
-        body.exec(env);
-        return env.variableDefined(name) ? env.getVariable(name) : new Number(0);
-    }
-    
-    /**
      * Executes the Procedure given procedure arguments to pass in
      * @param rootEnv   The root Environment of the program
      * @param paramVals A List of param values to pass into the procedure
@@ -67,22 +57,14 @@ public class ProcedureDecleration
      * @throws LanguageException
      * @throws Jump
      */
-    public Expression exec(/*Environment rootEnv, */ List<Expression> paramVals) throws LanguageException, Jump
+    public void exec(Environment env) throws LanguageException
     {
-        int recievedParamsSize = paramVals.size();
-        if (recievedParamsSize != paramNames.size())
-        {
-            throw new ArugmentException(name, paramNames.size(), recievedParamsSize);
-        }
-        Environment env = new Environment(/*rootEnv*/);
-        int i = 0;
-        for (Expression paramVal : paramVals)
-        {
-            env.setVariable(paramNames.get(i), paramVal);
-            i++;
-        }
-        body.exec(env);
-        return env.variableDefined(name) ? env.getVariable(name) : new Number(0);
+        env.setProcedure(getName(), this);
+    }
+
+    public List<String> getParamNames()
+    {
+        return paramNames;
     }
 
     /**

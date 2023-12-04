@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import exceptions.TypeMismatch;
@@ -48,4 +49,23 @@ public class Writeln extends Statement
     {
         return "WRITELN " + exp;
     }
+
+    /**
+     * Writes out the MIPS instructions representing the WRITE
+     * statement. Prints the contents of the $v0 register
+     * @param e The Emitter to use to write out the mips instructions to
+     */
+    public void compile(Emitter emitter)
+    {
+        exp.compile(emitter);
+        
+        emitter.emit("move $a0, $v0");
+        emitter.emit("li $v0, " + 1);
+        emitter.emit("syscall");
+
+        // print new line
+        emitter.emit("li $v0, 4");
+        emitter.emit("la $a0, newLine");
+        emitter.emit("syscall");
+    } 
 }

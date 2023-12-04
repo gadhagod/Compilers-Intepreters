@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 
 /**
@@ -28,5 +29,16 @@ public class Str extends Expression
     public String eval(Environment env)
     {
         return val;
+    }
+
+    /**
+     * Throws an UnsupportedOperationException because strings are not implemented in the 
+     * compiler
+     * @param e     The Emitter to use to write out the MIPS instructions
+     */
+    @Override
+    public void compile(Emitter e) 
+    {
+        throw new UnsupportedOperationException("Strings not implemented in compiled pascal");
     }
 }

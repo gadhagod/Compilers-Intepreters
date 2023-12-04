@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import jumps.Exit;
@@ -56,5 +57,16 @@ public class Ext extends Statement
     public String toString(Environment env) throws LanguageException, Jump 
     {
         return "EXIT";
+    }
+
+    /**
+     * Throws an UnsupportedOperationException because exits 
+     * aren't supported in the compiler
+     * @param e     The Emitter to use to write out the MIPS instructions
+     */
+    @Override
+    public void compile(Emitter e) 
+    {
+        throw new UnsupportedOperationException("EXIT not implemented in compiled pascal");
     }
 }

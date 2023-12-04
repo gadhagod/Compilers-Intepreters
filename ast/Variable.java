@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.TypeMismatch;
 import exceptions.VariableNotDefined;
@@ -30,5 +31,24 @@ public class Variable extends Expression
     public Expression eval(Environment env) throws TypeMismatch, VariableNotDefined
     {
         return env.getVariable(varName);
+    }
+
+    /**
+     * Stores the value of the variable into $t0
+     * @param e     The Emitter to use to write out the MIPS instructions
+     */
+    @Override
+    public void compile(Emitter emitter) 
+    {
+        emitter.emit("lw $v0, " + varName);
+    }
+
+    /**
+     * Gets the name of the variable
+     * @return  The name of the variable
+     */
+    public String toString()
+    {
+        return varName;
     }
 }

@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import jumps.Jump;
@@ -70,5 +71,21 @@ public class If extends Statement
     public String toString(Environment env)
     {
         return "IF " + condition;
+    }
+
+    /**
+     * Writes out the MIPS instructions representing this IF statement
+     * @param emitter     The Emitter to use to write out the MIPS instructions
+     */
+    @Override
+    public void compile(Emitter emitter) 
+    {
+        int id = Emitter.nextLabelID();
+        BinOp.setCurrLabelID(id);
+        String label = BinOp.getCurrLabel();
+        BinOp cond = (BinOp) (condition);
+        cond.compile(emitter);
+        then.compile(emitter);
+        emitter.emit(label + ":");
     }
 }

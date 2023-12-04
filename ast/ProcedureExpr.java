@@ -2,10 +2,13 @@ package ast;
 
 import java.util.List;
 
+import emitter.Emitter;
 import environment.Environment;
+import exceptions.ArugmentException;
 import exceptions.IllegalBreak;
 import exceptions.IllegalContinue;
 import exceptions.LanguageException;
+import exceptions.ProcedureNotDefined;
 import jumps.Break;
 import jumps.Exit;
 import jumps.Jump;
@@ -48,14 +51,14 @@ public class ProcedureExpr extends Expression
      * @throws LanguageException
      */
     public Expression eval(Environment env) throws LanguageException
-    {
+    {   
         try
         {
             if (params == null)
             {
-                return env.getProcedure(procName).exec();
+                return getReturnVal(env);
             }
-            return env.getProcedure(procName).exec(params);
+            return getReturnValWithParams(env);
         }
         catch (Jump err)
         {
@@ -74,6 +77,50 @@ public class ProcedureExpr extends Expression
         }
     }
 
+        /**
+     * Executes the Procedure without procedure arguments
+     * @param rootEnv   The root Environment of the program
+     * @return          The return value of the Procedure
+     * @throws LanguageException
+     * @throws Jump
+     */
+    private Expression getReturnVal(Environment rootEnv) throws LanguageException, Jump 
+    {
+        ProcedureDecleration proc = rootEnv.getProcedure(procName);
+        Environment childEnv = new Environment(/*rootEnv*/);
+        if (proc.getParamNames() != null)
+        {
+            throw new ArugmentException(proc.getName(), proc.getParamNames().size(), 0);
+        }
+        proc.getBody().exec(childEnv);
+        return childEnv.variableDefined(proc.getName()) ? childEnv.getVariable(proc.getName()) : new Number(0);
+    }
+    
+
+    private Expression getReturnValWithParams(Environment env) throws LanguageException, Jump
+    {
+        ProcedureDecleration proc = env.getProcedure(procName);
+
+        int recievedParamsSize = params.size();
+        if (recievedParamsSize != proc.getParamNames().size())
+        {
+            throw new ArugmentException(
+                proc.getName(), 
+                proc.getParamNames().size(), 
+                recievedParamsSize
+            );
+        }
+        Environment childEnv = new Environment(/*rootEnv*/);
+        int i = 0;
+        for (Expression paramVal : params)
+        {
+            childEnv.setVariable(proc.getParamNames().get(i), paramVal);
+            i++;
+        }
+        proc.getBody().exec(childEnv);
+        return childEnv.variableDefined(proc.getName()) ? childEnv.getVariable(proc.getName()) : new Number(0);
+    }
+
     /**
      * Gets the String value of the procedure call
      * @return  The String representation of the procedure call,
@@ -82,5 +129,16 @@ public class ProcedureExpr extends Expression
     public String toString()
     {
         return procName + "(" + params == null ? "" : params + ")";
+    }
+
+    /**
+     * Throws an UnsupportedOperationException because procedures are not implemented in the 
+     * compiler
+     * @param e     The Emitter to use to write out the MIPS instructions
+     */
+    @Override
+    public void compile(Emitter e) 
+    {
+        throw new UnsupportedOperationException("Procedures not implemented in compiled pascal");
     }
 }

@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 
 /**
@@ -58,4 +59,13 @@ public class Number extends Expression
     {
         val = val + count;
     }
+
+    /**
+     * Stores the value of the Number into $v0
+     * @param e     The Emitter to use to write out the MIPS instructions
+     */
+    public void compile(Emitter e)
+    {
+        e.emit("li $v0, " + val);
+    } 
 }

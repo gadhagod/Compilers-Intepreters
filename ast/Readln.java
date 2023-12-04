@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import exceptions.TypeMismatch;
@@ -59,5 +60,16 @@ public class Readln extends Statement
     public String toString(Environment env)
     {
         return "READLN -> " + varName;
+    }
+
+    /**
+     * Throws an UnsupportedOperationException because READLN is not implemented in the 
+     * compiler
+     * @param e     The Emitter to use to write out the MIPS instructions
+     */
+    @Override
+    public void compile(Emitter e) 
+    {
+        throw new UnsupportedOperationException("READLN not implemented in compiled pascal");
     }
 }

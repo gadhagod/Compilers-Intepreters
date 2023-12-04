@@ -23,6 +23,7 @@ import ast.Readln;
 import ast.Statement;
 import ast.Str;
 import ast.Variable;
+import ast.VariableDeclaration;
 import ast.While;
 import ast.Writeln;
 import environment.Environment;
@@ -96,31 +97,32 @@ public class Parser
 
     /**
      * Converts the current comma seperated set enclosed by parenthesis in the Token stream
-     * to a List object. For example, '("hi", 1, 4)'' in in the token stream would be converted
+     * to a List object. For example, '"hi", 1, 4' in in the token stream would be converted
      * to a List containing [Str("hi"), Number(1), Number(4)]
+     * @param terminator     The token that ends the list; when this token is seen,
+     *                       this method returns (without eating the terminator)
      * @param expectedClass  The type of the elements in the List; when parsing
      *                       a set of parameter names, use String.class, when 
      *                       parsing a list of parameter values, use Expression.class
+     * 
      * @return               The List of values in the comma-seperated set
      */
-    public <T> List<T> parseCommaSeperatedSet(Class<T> expectedClass) throws IOException, LanguageException
+    public <T> List<T> parseCommaSeperatedSet(Class<T> expectedClass, Seperator terminator) throws IOException, LanguageException
     {
-        List<T> paramNames = null;
-        eat(new SeperatorToken("("));
-        while (!((currToken instanceof SeperatorToken) && ((SeperatorToken) currToken).equals(Seperator.CLOSE_PAREN)))
+        List<T> items = new LinkedList<T>();
+        while (!
+            (
+                (currToken instanceof SeperatorToken) && ((SeperatorToken) currToken).equals(terminator)
+            )
+        )
         {
-            if (paramNames == null)
-            {
-                // initialize LinkedList only if we have to
-                paramNames = new LinkedList<T>();
-            }
             if (expectedClass.equals(String.class)) // param names
             {
-                ((List<String>) paramNames).add(parseIdentifier());
+                ((List<String>) items).add(parseIdentifier());
             }
             else // param values
             {
-                ((List<Expression>) paramNames).add(parseExpr());
+                ((List<Expression>) items).add(parseExpr());
 
             }
             if ((currToken instanceof SeperatorToken) && ((SeperatorToken) currToken).equals(Seperator.COMMA))
@@ -130,8 +132,7 @@ public class Parser
                 // TODO: right now, this may pass: "func(1 2)" without commas
             }
         }
-        eat(new SeperatorToken(")"));
-        return paramNames;
+        return items;
     }
 
     /**
@@ -159,14 +160,17 @@ public class Parser
      */
     private Expression parseExpr() throws IOException, LanguageException
     {
-        Expression val = parseTerm();
+        Expression firstTerm = parseTerm();
         while (currToken instanceof OperandToken)
         {
             Operand oper = parseOperand();
             Expression secondTerm = parseTerm();
-            return new BinOp(val, oper, secondTerm);
+            if (oper.equals(Operand.ADDITION) || oper.equals(Operand.SUBTRACTION) || BinOp.isComparisonOperator(oper))
+            {
+                firstTerm = new BinOp(firstTerm, oper, secondTerm);
+            }
         }
-        return val;
+        return firstTerm;
     }
 
     /**
@@ -252,7 +256,9 @@ public class Parser
             String id = parseIdentifier();
             if (currToken.equals(new SeperatorToken("(")))
             {
-                List<Expression> params = parseCommaSeperatedSet(Expression.class);
+                eat(new SeperatorToken("("));
+                List<Expression> params = parseCommaSeperatedSet(Expression.class, Seperator.CLOSE_PAREN);
+                eat(new SeperatorToken(")"));
                 if (params == null)
                 {
                     return new ProcedureExpr(id);
@@ -317,7 +323,7 @@ public class Parser
             ))
             {
                 Operand oper = parseOperand();
-                Expression second = expectType(parseFactor(), Number.class);
+                Expression second = parseFactor();
                 
                 /*
                 if (
@@ -468,7 +474,9 @@ public class Parser
             }
             else
             {
-                List<Expression> params = parseCommaSeperatedSet(Expression.class);
+                eat(new SeperatorToken("("));
+                List<Expression> params = parseCommaSeperatedSet(Expression.class, Seperator.CLOSE_PAREN);
+                eat(new SeperatorToken(")"));
                 if (params == null)
                 {
                     stmt = new ProcedureStmt(((IdentifierToken) token).toString());
@@ -497,7 +505,9 @@ public class Parser
     {
         eat(new KeywordToken(Keyword.PROCEDURE.name()));
         String name = parseIdentifier();
-        List<String> paramNames = parseCommaSeperatedSet(String.class);
+        eat(new SeperatorToken("("));
+        List<String> paramNames = parseCommaSeperatedSet(String.class, Seperator.CLOSE_PAREN);
+        eat(new SeperatorToken(")"));
         eat(new SeperatorToken(";"));
         if (paramNames == null)
         {
@@ -505,6 +515,21 @@ public class Parser
         }
         return new ProcedureDecleration(name, parseStatement(), paramNames);
 
+    }
+
+    /**
+     * Parses the current variable declaration statement in the Token stream. This is important
+     * so that the compiler can allocate space to variables.
+     * @return The variable declaration Statement 
+     * @throws IOException
+     * @throws LanguageException
+     */
+    public VariableDeclaration parseVariableDec() throws IOException, LanguageException
+    {
+        eat(new KeywordToken(Keyword.VAR.name()));
+        VariableDeclaration dec = new VariableDeclaration(parseCommaSeperatedSet(String.class, Seperator.SEMICOLON));
+        eat(new SeperatorToken(";"));
+        return dec;
     }
 
     /**
@@ -516,22 +541,21 @@ public class Parser
      */
     private Program parseProgram() throws IOException, LanguageException
     {
-        boolean hasProcs = false;
-        if (currToken.equals(new KeywordToken(Keyword.PROCEDURE.name())))
+        List<ProcedureDecleration> procs = new LinkedList<ProcedureDecleration>();
+        List<VariableDeclaration> varDecs = new LinkedList<VariableDeclaration>();
+        while (currToken.equals(new KeywordToken(Keyword.PROCEDURE.name())))
         {
-            hasProcs = true;
+            procs.add(parseProcedure());
         }
-        if (hasProcs)
+        while (currToken.equals(new KeywordToken(Keyword.VAR.name())))
         {
-            // create LinkedList only if we have to
-            List<ProcedureDecleration> procs = new LinkedList<ProcedureDecleration>();
-            while (currToken.equals(new KeywordToken(Keyword.PROCEDURE.name())))
-            {
-                procs.add(parseProcedure());
-            }
-            return new Program(procs, parseStatement());
+            varDecs.add(parseVariableDec());
         }
-        return new Program(parseStatement());
+        return new Program(
+            varDecs, 
+            procs, 
+            expectType(parseStatement(), Block.class) // TODO: throw error message
+        );
     }
 
     /**
@@ -542,5 +566,14 @@ public class Parser
     public void execute() throws LanguageException, IOException
     {
         parseProgram().exec(env);
+    }
+    
+    /**
+     * Compiles the program and writes the MIPS output to a file
+     * @param fileName  The file to write the MIPS code to
+     */
+    public void compile(String fileName) throws LanguageException, IOException
+    {
+        parseProgram().compile(fileName);
     }
 }

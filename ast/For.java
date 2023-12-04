@@ -1,6 +1,7 @@
 
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import exceptions.TypeMismatch;
@@ -98,5 +99,16 @@ public class For extends Statement
     public String toString(Environment env) throws LanguageException
     {
         return "FOR " + currName + " < " + max.toString(env);
+    }
+
+    /**
+     * Throws an UnsupportedOperationException because fors 
+     * aren't supported in the compiler
+     * @param e     The Emitter to use to write out the MIPS instructions
+     */
+    @Override
+    public void compile(Emitter e) 
+    {
+        throw new UnsupportedOperationException("FOR not implemented in compiled pascal");
     }
 }

@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import exceptions.TypeMismatch;
@@ -82,5 +83,29 @@ public class While extends Statement
     public String toString(Environment env)
     {
         return "WHILE " + condition;
+    }
+
+    /**
+     * Writes out the MIPS instructions representing the WHILE
+     * statement
+     * @param e The Emitter to use to write out the mips instructions to
+     */
+    @Override
+    public void compile(Emitter emitter) 
+    {
+        System.out.println(condition);
+
+        int id = Emitter.nextLabelID();
+        BinOp.setCurrLabelID(id);
+        String label = BinOp.getCurrLabel();
+        BinOp cond = (BinOp) (condition);
+        
+        cond.compile(emitter); // create conditional
+
+        emitter.emit(label + ":"); // create label to contain DO block
+        _do.compile(emitter);      // write DO block
+
+        cond.inverse();        // reverse the if statement
+        cond.compile(emitter);
     }
 }

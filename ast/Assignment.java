@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import exceptions.TypeMismatch;
@@ -49,5 +50,11 @@ public class Assignment extends Statement
     public String toString(Environment env) throws LanguageException
     {
         return name + " := " + value.toString(env);
+    }
+
+    public void compile(Emitter emitter)
+    {
+        value.compile(emitter);
+        emitter.emit("sw $v0, " + name);
     }
 }

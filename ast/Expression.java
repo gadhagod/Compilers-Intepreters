@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 
@@ -25,4 +26,10 @@ public abstract class Expression
     {
         return eval(env).toString();
     };
+
+    /**
+     * Evaluates and stores the value of the expression in $v0
+     * @param e     The Emitter to use to write out the MIPS instructions
+     */
+    public abstract void compile(Emitter emitter) throws IllegalArgumentException;
 }

@@ -2,6 +2,7 @@ package ast;
 
 import java.util.List;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import exceptions.TypeMismatch;
@@ -42,6 +43,15 @@ public class Block extends Statement
     }
 
     /**
+     * Gets the List of Statements composing this Block
+     * @return  The statements composing this Block
+     */
+    public List<Statement> getStatements()
+    {
+        return stmts;
+    }
+
+    /**
      * Gets the String representation of the statement
      * @param env  The Environment this statement is in
      * @return     The String representation of the statement
@@ -49,5 +59,17 @@ public class Block extends Statement
     public String toString(Environment env)
     {
         return stmts.toString();
+    }
+
+    /**
+     * Compiles each sub-statements composing this Block
+     * @param emitter   The emitter to use to write the MIPS instructions to
+     */
+    public void compile(Emitter emitter)
+    {
+        for (Statement stmt : stmts)
+        {
+            stmt.compile(emitter);
+        }
     }
 }

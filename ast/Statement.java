@@ -1,5 +1,6 @@
 package ast;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import jumps.Jump;
@@ -27,4 +28,11 @@ public abstract class Statement
      * @throws Jump
      */
     public abstract String toString(Environment env) throws LanguageException, Jump;
+
+    /**
+     * Writes out the MIPS instructions representing the pascal
+     * statement
+     * @param e The Emitter to use to write out the mips instructions to
+     */
+    public abstract void compile(Emitter emitter);
 }
