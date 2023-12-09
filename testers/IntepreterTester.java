@@ -5,7 +5,7 @@ import environment.Environment;
 import scanner.Scanner;
 import parser.Parser;
 
-public class ParserTester 
+public class IntepreterTester 
 {
     public static void main(String[] args) throws Exception 
     {
