@@ -93,8 +93,6 @@ public class While extends Statement
     @Override
     public void compile(Emitter emitter) 
     {
-        System.out.println(condition);
-
         int id = Emitter.nextLabelID();
         BinOp.setCurrLabelID(id);
         String label = BinOp.getCurrLabel();

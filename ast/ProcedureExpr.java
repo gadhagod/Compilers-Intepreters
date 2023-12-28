@@ -8,7 +8,6 @@ import exceptions.ArugmentException;
 import exceptions.IllegalBreak;
 import exceptions.IllegalContinue;
 import exceptions.LanguageException;
-import exceptions.ProcedureNotDefined;
 import jumps.Break;
 import jumps.Exit;
 import jumps.Jump;
@@ -132,13 +131,36 @@ public class ProcedureExpr extends Expression
     }
 
     /**
-     * Throws an UnsupportedOperationException because procedures are not implemented in the 
-     * compiler
+     * Compiles a Procedure call and writes the resultant MIPS code into an output file 
      * @param e     The Emitter to use to write out the MIPS instructions
      */
     @Override
-    public void compile(Emitter e) 
+    public void compile(Emitter emitter) 
     {
-        throw new UnsupportedOperationException("Procedures not implemented in compiled pascal");
+        // push return address onto stack
+        emitter.emit("# push return address onto stack");
+        emitter.emitPush("$ra");
+        
+        // push params onto stack
+        emitter.emit("#push params onto stack");
+        for (Expression expr : params)
+        {
+            expr.compile(emitter);
+            emitter.emitPush("$v0");
+        }
+
+        // jump to procedure
+        emitter.emit("jal proc" + procName);
+
+        // pop params from stack
+        emitter.emit("#pop params from stack");
+        for (int i = 0; i < params.size(); i++)
+        {
+            emitter.emitPop();
+        }
+
+        // pop return address from stack
+        emitter.emit("#pop return address from stack");
+        emitter.emitPop("$ra");
     }
 }

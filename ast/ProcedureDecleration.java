@@ -1,11 +1,12 @@
 package ast;
 
+import java.util.LinkedList;
 import java.util.List;
 
+import emitter.Emitter;
 import environment.Environment;
 import exceptions.LanguageException;
 import jumps.Jump;
-
 /**
  * Represents a decleration of a Procedure, a repeatable
  * block of code that can take in inputs and return values
@@ -13,6 +14,7 @@ import jumps.Jump;
 public class ProcedureDecleration
 {
     private List<String> paramNames;
+    private List<String> localNames;
     private String name;
     private Statement body;
 
@@ -25,6 +27,7 @@ public class ProcedureDecleration
     {
         this.name = name;
         this.body = body;
+        populateLocalVars();
     }
     
     /**
@@ -47,6 +50,24 @@ public class ProcedureDecleration
         this.name = name;
         this.body = body;
         this.paramNames = paramNames;
+        populateLocalVars();
+    }
+
+    public void populateLocalVars()
+    {
+        if (
+            body instanceof Block && 
+            ((Block) (body)).getStatements().get(0) instanceof VariableDeclaration
+        )
+        {
+            List<Statement> stmts = ((Block) (body)).getStatements();
+            localNames = ((VariableDeclaration) stmts.get(0)).getVarNames();
+            stmts.remove(0); // remove the variable decleration from the body
+        }
+        else
+        {
+            localNames = new LinkedList<String>();
+        }
     }
 
     /**
@@ -65,6 +86,11 @@ public class ProcedureDecleration
     public List<String> getParamNames()
     {
         return paramNames;
+    }
+    
+    public List<String> getLocalNames()
+    {
+        return localNames;
     }
 
     /**
@@ -86,5 +112,58 @@ public class ProcedureDecleration
     public String getName()
     {
         return name;
+    }
+
+    /**
+     * Checks whether a variable is local to a procedure
+     * @param varName   The name of the variable to test
+     * @return          Whether the variable is local to the procedure
+     */
+    public boolean isLocalVariable(String varName)
+    {
+        return paramNames.contains(varName) || localNames.contains(varName) || name.equals(varName);
+    }
+
+    /**
+     * Compiles the procedure decleration into MIPS and outputes the 
+     * assembly code into the output file
+     * @param emitter   The Emitter to use to emit the MIPS code to
+     */
+    public void compile(Emitter emitter)
+    {
+
+        // precondition: params are on the stack
+        emitter.emit("proc" + name + ":");
+
+        // add return value to stack
+        emitter.emit("# add return value to stack");
+        emitter.emit("li $v0, 0");
+        emitter.emitPush("$v0");
+
+        // add local vars to stack
+        emitter.emit("# add local vars to stack");
+        for (int i = 0; i < localNames.size(); i++)
+        {
+            emitter.emit("li $v0, 0"); // placeholder value
+            emitter.emitPush("$v0");
+        }
+
+        emitter.setProcedureContext(this);
+
+        body.compile(emitter);
+
+        // remove local vars on the stack
+        emitter.emit("# remove local vars on the stack");
+        for (int i = 0; i < localNames.size(); i++)
+        {
+            emitter.emitPop();
+        }
+
+        // remove return val from stack and store in $v0 
+        emitter.emit("# return val from stack and store in $v0 ");
+        emitter.emitPop("$v0");
+
+        emitter.emit("jr $ra");
+        emitter.clearProcedureContext();
     }
 }

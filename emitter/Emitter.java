@@ -1,5 +1,8 @@
 package emitter;
 import java.io.*;
+import java.util.List;
+
+import ast.ProcedureDecleration;
 
 /**
  * Emits MIPS code into an output file
@@ -10,6 +13,8 @@ public class Emitter
 {
 	private static int currId;
 	private PrintWriter out;
+	private static ProcedureDecleration currProc;
+	private int excessStackHeight;
 
 	/**
 	 * Creates an emitter for writing to a new file with given name
@@ -44,6 +49,10 @@ public class Emitter
 	 */
 	public void emitPush(String reg)
 	{
+		if (hasProcedureContext())
+		{
+			excessStackHeight += 4;
+		}
 		emit("# push " + reg);
 		emit("subu $sp $sp 4");
 		emit("sw " + reg + " ($sp)");
@@ -55,8 +64,24 @@ public class Emitter
 	 */
 	public void emitPop(String reg) 
 	{
+		if (hasProcedureContext())
+		{
+			excessStackHeight -= 4;
+		}
 		emit("# pop " + reg);
 		emit("lw " + reg + " ($sp)");
+		emit("addu $sp $sp 4");
+	}
+	
+	/**
+	 * Emits a stack pop into the output file that does not pop into a register
+	 */
+	public void emitPop() 
+	{
+		if (hasProcedureContext())
+		{
+			excessStackHeight -= 4;
+		}
 		emit("addu $sp $sp 4");
 	}
 
@@ -76,5 +101,89 @@ public class Emitter
 	{
 		currId++;
 		return currId;
+	}
+
+	/**
+	 * Gets the current procedure being compiled
+	 * @return 	The current procedure being compiled
+	 */
+	public ProcedureDecleration getProcedureContext()
+	{
+		return currProc;
+	}
+	
+	/**
+	 * Checks whether a procedure is currently being compiled
+	 * @return 	Whther a procedure is currently being compiled 
+	 */
+	public boolean hasProcedureContext()
+	{
+		return currProc != null;
+	}
+
+	/**
+	 * Sets the instance field containing the current procedure being compiled
+	 * @param proc	The current procedure being compiled
+	 */
+	public void setProcedureContext(ProcedureDecleration proc) 
+	{
+		excessStackHeight = 0;
+		currProc = proc;
+	}
+
+	/**
+	 * Removes the stored procedure being compiled
+	 */
+	public void clearProcedureContext() 
+	{
+		currProc = null;
+	}
+
+	/**
+	 * Gets the stack pointer offset to access a variable given its name
+	 * @param localVarName	The variable to get the offset of
+	 * @return				The offset used to access the value of the variable
+	 */
+	public int getOffset(String localVarName) 
+	{
+		List<String> localNames = currProc.getLocalNames();
+
+		// move the offset down skip over excess stack items at top
+		int offset = excessStackHeight;
+
+		// traverse localNames backwards
+		for (int i = localNames.size() - 1; i >= 0; i--)
+		{
+			String paramName = localNames.get(i);
+			if (paramName.equals(localVarName))
+			{
+				return offset;
+			}
+			offset += 4;
+		}
+
+		// by now, you've gone through local vars
+		// now, go through the return value
+		if (localVarName.equals(currProc.getName()))
+		{
+			return offset;
+		}
+		offset += 4;
+
+		// by now, you've gone through params and return value
+		// the stack pointer now points to the top param
+		// now, go through the params
+		List<String> paramNames = currProc.getParamNames();
+		for (int i = paramNames.size() - 1; i >= 0; i--)
+		{
+			String paramName = paramNames.get(i);
+			if (paramName.equals(localVarName))
+			{
+				return offset;
+			}
+			offset += 4;
+		}
+		// by now, you might as well kys cuz the code shouldnt reach here
+		return 0;
 	}
 }

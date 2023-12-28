@@ -307,7 +307,7 @@ public class Parser
     private Expression parseTerm() throws IOException, LanguageException
     {
         Expression expr = parseFactor();
-        if (expr instanceof Number)
+        if (expr instanceof Number || expr instanceof Variable)
         {
             while ((currToken instanceof OperandToken) && (
                 ((OperandToken) (currToken)).equals(Operand.MULTIPLICATION) ||
@@ -373,6 +373,13 @@ public class Parser
         {
             System.exit(0);
             throw new IOException(); // dummy throw to pass IO exception
+        }
+        else if (
+            token instanceof KeywordToken && 
+            ((KeywordToken) (token)).equals(Keyword.VAR)
+        )
+        {
+            return parseVariableDec();
         }
         else if (
             token instanceof KeywordToken && 
@@ -526,7 +533,6 @@ public class Parser
      */
     public VariableDeclaration parseVariableDec() throws IOException, LanguageException
     {
-        eat(new KeywordToken(Keyword.VAR.name()));
         VariableDeclaration dec = new VariableDeclaration(parseCommaSeperatedSet(String.class, Seperator.SEMICOLON));
         eat(new SeperatorToken(";"));
         return dec;
@@ -549,6 +555,7 @@ public class Parser
         }
         while (currToken.equals(new KeywordToken(Keyword.VAR.name())))
         {
+            eat(new KeywordToken(Keyword.VAR.name()));
             varDecs.add(parseVariableDec());
         }
         return new Program(

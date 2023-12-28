@@ -98,6 +98,10 @@ public class Program
         }
         emitter.emit("li $v0 10");
         emitter.emit("syscall # halt");
+        for (ProcedureDecleration proc : procs)
+        {
+            proc.compile(emitter);
+        }
         emitter.emit(".data");
         emitter.emit("newLine: .asciiz \"\\n\"");
         for (VariableDeclaration var : varDeclarations)

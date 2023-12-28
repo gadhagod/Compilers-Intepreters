@@ -52,9 +52,21 @@ public class Assignment extends Statement
         return name + " := " + value.toString(env);
     }
 
+    /**
+     * Compiles the assignment statement and emits the resultant
+     * MIPS code into the output file
+     * @param emitter   The emitter to use to write to the file
+     */
     public void compile(Emitter emitter)
     {
         value.compile(emitter);
-        emitter.emit("sw $v0, " + name);
+        if (emitter.hasProcedureContext() && emitter.getProcedureContext().isLocalVariable(name))
+        {
+            emitter.emit("sw $v0, " + emitter.getOffset(name) + "($sp)");
+        }
+        else
+        {
+            emitter.emit("sw $v0, " + name);
+        }
     }
 }

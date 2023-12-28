@@ -16,7 +16,7 @@ import jumps.Jump;
  * @author  Aarav Borthakur
  * @version 11/23/23
  */
-public class VariableDeclaration
+public class VariableDeclaration extends Statement
 {
     private List<String> varNames;
 
@@ -39,5 +39,30 @@ public class VariableDeclaration
         {
             emitter.emit(name + ": .word 0");
         }
+    }
+
+    /**
+     * Gets the variable names that are being declared in this statement
+     * @return  A List containing the variable names
+     */
+    public List<String> getVarNames()
+    {
+        return varNames;
+    }
+
+    @Override
+    /**
+     * Executes the variable declaration, but really does nothing because
+     * variable declarations are ignored in intepreted pascal
+     */
+    public void exec(Environment env) throws LanguageException, Jump 
+    {
+        // empty because variable declarations are ignored in intepreted pascal
+    }
+
+    @Override
+    public String toString(Environment env) throws LanguageException, Jump 
+    {
+        return varNames.toString();
     }
 }

@@ -40,7 +40,14 @@ public class Variable extends Expression
     @Override
     public void compile(Emitter emitter) 
     {
-        emitter.emit("lw $v0, " + varName);
+        if (emitter.hasProcedureContext() && emitter.getProcedureContext().isLocalVariable(varName))
+        {
+            emitter.emit("lw $v0, " + emitter.getOffset(varName) + "($sp)");
+        }
+        else
+        {
+            emitter.emit("lw $v0, " + varName);
+        }
     }
 
     /**

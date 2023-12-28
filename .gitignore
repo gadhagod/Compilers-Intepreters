@@ -29,3 +29,6 @@ program.txt
 program.asm
 Mars4_5.jar
 .DS_Store
+
+parserTest*
+CompiledProcedureTester.*
