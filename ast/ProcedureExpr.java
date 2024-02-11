@@ -76,7 +76,7 @@ public class ProcedureExpr extends Expression
         }
     }
 
-        /**
+    /**
      * Executes the Procedure without procedure arguments
      * @param rootEnv   The root Environment of the program
      * @return          The return value of the Procedure
@@ -95,7 +95,13 @@ public class ProcedureExpr extends Expression
         return childEnv.variableDefined(proc.getName()) ? childEnv.getVariable(proc.getName()) : new Number(0);
     }
     
-
+    /**
+     * Executes the Procedure with procedure arguments
+     * @param env       The root Environment of the program
+     * @return          The return value of the Procedure
+     * @throws LanguageException
+     * @throws Jump
+     */
     private Expression getReturnValWithParams(Environment env) throws LanguageException, Jump
     {
         ProcedureDecleration proc = env.getProcedure(procName);
@@ -115,6 +121,10 @@ public class ProcedureExpr extends Expression
         {
             childEnv.setVariable(proc.getParamNames().get(i), paramVal);
             i++;
+        }
+        for (String localName : proc.getLocalNames())
+        {
+            childEnv.declareVariable(localName);
         }
         proc.getBody().exec(childEnv);
         return childEnv.variableDefined(proc.getName()) ? childEnv.getVariable(proc.getName()) : new Number(0);

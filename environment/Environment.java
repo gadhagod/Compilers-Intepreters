@@ -5,6 +5,7 @@ import java.util.Map;
 
 import ast.BinOp;
 import ast.Expression;
+import ast.Number;
 import ast.ProcedureExpr;
 import ast.Variable;
 import ast.ProcedureDecleration;
@@ -103,7 +104,6 @@ public class Environment
      */
     public void setVariable(String name, Expression value) throws LanguageException
     {
-        boolean definedInRoot = root.variableDefined(name);
         while (value instanceof Variable || value instanceof BinOp || value instanceof ProcedureExpr)
         {
             if (value instanceof Variable)
@@ -119,7 +119,11 @@ public class Environment
                 value = ((BinOp) value).eval(this);
             }
         }
-        if (definedInRoot && !isRoot())
+        if (isRoot())
+        {
+            vars.put(name, value);
+        }
+        else if (!variableDefined(name) && root.variableDefined(name))
         {
             root.setVariable(name, value);
         }
@@ -149,6 +153,16 @@ public class Environment
             }
         }
         return val;
+    }
+
+    /**
+     * Declares a value in the environment
+     * @param name  The name of the variable to retrieve
+     * @return      The value of the variable
+     */
+    public void declareVariable(String name) throws VariableNotDefined
+    {
+        vars.put(name, new Number(0));
     }
     
     /**
