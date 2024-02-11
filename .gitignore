@@ -32,3 +32,6 @@ Mars4_5.jar
 
 parserTest*
 CompiledProcedureTester.*
+
+# flex-generated files
+Scannerabb*
